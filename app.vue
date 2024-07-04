@@ -2,65 +2,70 @@
   <div class="min-w-full min-h-full h-100%">
     <div class="lg:flex">
 
-      <div class="w-[40%] bg-indigo-600">
-        <h1 class=""></h1>
+      <div class="w-[40%] bg-indigo-600 font-mono text-white">
+        <h1 class="text-2xl text-center mt-16">4242.pro</h1>
+        <p class="text-center my-2 mx-4">Let's see if ur a 10x engineer, fill this Stripe asap</p>
+        <!-- show 4 decimals only -->
+        <p class="mt-32 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+        <p class="mt-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
       </div>
 
       <div class="w-[40%] bg-gray-100">
-        <div class="rounded-lg border shadow-sm w-full max-w-lg">
+
+        <div class="my-16 mx-auto rounded-lg w-full max-w-lg">
           <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight">Met kaart betalen</h3>
+            <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight">Pay with card</h3>
           </div>
           <div class="p-6 space-y-4">
             <div class="space-y-2">
-              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">E-mail</label>
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="email" placeholder="erwin+2222@remotedev.co" type="email" value="erwin+2222@remotedev.co">
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
+              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="email" placeholder="" type="email" value="">
             </div>
             <div class="space-y-2">
-              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Kaartinformatie</label>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Card information</label>
               <div class="relative w-full bg-white">
                 <div class="relative">
-              <span class="block m-0 p-0 relative w-full">
-                <input class="rounded-none appearance-none bg-white border-0 shadow-[0_0_0_1px_#e0e0e0,0_2px_4px_0_rgba(0,0,0,0.07),0_1px_1.5px_0_rgba(0,0,0,0.05)] text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="cc-number" autocorrect="off" spellcheck="false" id="cardNumber" name="cardNumber" type="text" inputmode="numeric" aria-label="Kaartnummer" placeholder="1234 1234 1234 1234" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
-              </span>
+          <span class="block m-0 p-0 relative w-full">
+            <input @focusin="timer.start()" v-model="cardNumber" class="rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="cc-number" autocorrect="off" spellcheck="false" id="cardNumber" name="cardNumber" type="text" inputmode="numeric" aria-label="Kaartnummer" placeholder="1234 1234 1234 1234" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
+          </span>
                 </div>
                 <div class="flex items-center pointer-events-none absolute right-0 top-0 h-full pr-2 z-[3]" style="opacity: 1;">
                   <div style="transform: none;">
-                <span class="flex items-center pointer-events-none pr-1 z-[3]">
-                  <img src="/visa.svg" alt="Visa" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                </span>
+            <span class="flex items-center pointer-events-none pr-1 z-[3]">
+              <img src="/visa.svg" alt="Visa" class="h-4 border-none" loading="lazy">
+            </span>
                   </div>
                   <div style="transform: none;">
-                <span class="flex items-center pointer-events-none pr-1 z-[3]">
-                  <img src="/mastercard.svg" alt="MasterCard" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                </span>
+            <span class="flex items-center pointer-events-none pr-1 z-[3]">
+              <img src="/mastercard.svg" alt="MasterCard" class="h-4 border-none" loading="lazy">
+            </span>
                   </div>
                   <div style="transform: none;">
-                <span class="flex items-center pointer-events-none pr-1 z-[3]">
-                  <img src="/amex.svg" alt="American Express" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                </span>
+            <span class="flex items-center pointer-events-none pr-1 z-[3]">
+              <img src="/amex.svg" alt="American Express" class="h-4 border-none" loading="lazy">
+            </span>
                   </div>
                   <div class="relative flex items-center h-4 w-7">
-                <span class="card-icon opacity-100 scale-100 absolute top-0 left-0 transition-all duration-400 ease-[0.15s]" role="presentation">
-                  <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
-                    <img src="/unionpay.svg" alt="UnionPay" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                  </span>
-                </span>
+            <span class="card-icon opacity-100 scale-100 absolute top-0 left-0 transition-all duration-400 ease-[0.15s]" role="presentation">
+              <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
+                <img src="/unionpay.svg" alt="UnionPay" class="h-4 border-none" loading="lazy">
+              </span>
+            </span>
                     <span class="card-icon opacity-0 scale-[0.9] absolute top-0 left-0 transition-all duration-400 ease-[0.15s]" role="presentation">
-                  <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
-                    <img src="/jcb.svg" alt="JCB" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                  </span>
-                </span>
+              <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
+                <img src="/jcb.svg" alt="JCB" class="h-4 border-none" loading="lazy">
+              </span>
+            </span>
                     <span class="card-icon opacity-0 scale-[0.9] absolute top-0 left-0 transition-all duration-400 ease-[0.15s]" role="presentation">
-                  <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
-                    <img src="/discover.svg" alt="Discover" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                  </span>
-                </span>
+              <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
+                <img src="/discover.svg" alt="Discover" class="h-4 border-none" loading="lazy">
+              </span>
+            </span>
                     <span class="card-icon opacity-0 scale-[0.9] absolute top-0 left-0 transition-all duration-400 ease-[0.15s]" role="presentation">
-                  <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
-                    <img src="/diners.svg" alt="Diners Club" class="h-4 border-none" loading="lazy" fetchpriority="low">
-                  </span>
-                </span>
+              <span class="flex items-center pointer-events-none pr-1 z-[3]" role="presentation">
+                <img src="/diners.svg" alt="Diners Club" class="h-4 border-none" loading="lazy">
+              </span>
+            </span>
                   </div>
                 </div>
               </div>
@@ -70,52 +75,156 @@
               </div>
             </div>
             <div class="space-y-2">
-              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="cardholder-name">Naam kaarthouder</label>
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="cardholder-name">Cardholder name</label>
               <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="cardholder-name" placeholder="Volledige naam">
             </div>
-            <div class="space-y-2">
-              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Factuuradres</label>
-              <button type="button" role="combobox" aria-controls="radix-:r3:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-placeholder="" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="country" aria-label="Country">
-                <span style="pointer-events: none;">Indonesië</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4 opacity-50" aria-hidden="true">
-                  <path d="m6 9 6 6 6-6"></path>
-                </svg>
-              </button>
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="address-line-1" placeholder="Adresregel 1">
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="address-line-2" placeholder="Adresregel 2">
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="city" placeholder="Stad">
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="province" placeholder="Provincie">
-              <input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" id="postal-code" placeholder="Postcode">
+            <div class="space-y-2" data-qa="FormFieldGroup-billing-address">
+              <div class="flex justify-between">
+                <label for="billing-address-fieldset">
+                  <span class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Billing address</span>
+                </label>
+              </div>
+              <fieldset class="border-none ml-0 mr-0 my-1 p-0" id="billing-address-fieldset">
+                <div class="flex flex-wrap relative">
+                  <div class="w-full flex-initial max-w-full min-w-0">
+                    <div class="relative">
+                      <select id="billingCountry" name="billingCountry" autocomplete="billing country" aria-label="Land of regio" class="min-[992px]:text-[14px] min-[992px]:h-9 rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal pr-8 transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full normal-case m-0 px-4">
+                        <CountrySelectorOptions />
+                      </select>
+                      <svg class="h-3 mt-[calc(12px*-.5)] pointer-events-none absolute right-[12px] top-1/2 w-3 z-[3]" focusable="false" viewBox="0 0 12 12">
+                        <path d="M10.193 3.97a.75.75 0 0 1 1.062 1.062L6.53 9.756a.75.75 0 0 1-1.06 0L.745 5.032A.75.75 0 0 1 1.807 3.97L6 8.163l4.193-4.193z" fill-rule="evenodd"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="w-full flex-initial max-w-full min-w-0">
+                    <div class="relative">
+              <span class="block m-0 p-0 relative w-full">
+                <input class="min-[992px]:text-[14px] min-[992px]:h-9 rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="billing address-line1" autocorrect="off" spellcheck="false" id="billingAddressLine1" name="billingAddressLine1" type="text" aria-label="Adresregel 1" placeholder="Adresregel 1" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
+              </span>
+                    </div>
+                  </div>
+                  <div class="w-full flex-initial max-w-full min-w-0">
+                    <div class="relative">
+              <span class="block m-0 p-0 relative w-full">
+                <input class="min-[992px]:text-[14px] min-[992px]:h-9 rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="billing address-line2" autocorrect="off" spellcheck="false" id="billingAddressLine2" name="billingAddressLine2" type="text" aria-label="Adresregel 2" placeholder="Adresregel 2" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
+              </span>
+                    </div>
+                  </div>
+                  <div class="w-full flex-initial max-w-full min-w-0">
+                    <div class="relative">
+              <span class="block m-0 p-0 relative w-full">
+                <input class="min-[992px]:text-[14px] min-[992px]:h-9 rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="billing address-level2" autocorrect="off" spellcheck="false" id="billingLocality" name="billingLocality" type="text" aria-label="Stad" placeholder="Stad" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
+              </span>
+                    </div>
+                  </div>
+                  <div class="w-full flex-initial max-w-full min-w-0">
+                    <div class="relative">
+              <span class="block m-0 p-0 relative w-full">
+                <input class="min-[992px]:text-[14px] min-[992px]:h-9 rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="billing postal-code" autocorrect="off" spellcheck="false" id="billingPostalCode" name="billingPostalCode" type="text" aria-label="Postcode" placeholder="Postcode" aria-invalid="false" aria-describedby="" data-1p-ignore="false" value="">
+              </span>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
             </div>
           </div>
           <div class="flex items-center p-6">
             <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-10 px-4 py-2 ml-auto w-full bg-[#0A2540] text-white">Betalen</button>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
 
+const timer = ref()
+const cardNumber = ref()
+const concludingMessage = ref("GOGoGOGO11!1!! Ur product manager and a senior engineer are already judging you.");
+const showConcludingMessage = ref(false);
+
 onMounted(() => {
-  document.addEventListener('DOMContentLoaded', function() {
-    const cardIcons = document.querySelectorAll('.card-icon');
-    let currentIndex = 0;
+  const cardIcons = document.querySelectorAll('.card-icon');
+  let currentIndex = 0;
 
-    function showNextIcon() {
-      cardIcons[currentIndex].classList.remove('opacity-100', 'scale-100');
-      cardIcons[currentIndex].classList.add('opacity-0', 'scale-[0.9]');
+  function showNextIcon() {
+    cardIcons[currentIndex].classList.remove('opacity-100', 'scale-100');
+    cardIcons[currentIndex].classList.add('opacity-0', 'scale-[0.9]');
 
-      currentIndex = (currentIndex + 1) % cardIcons.length;
+    currentIndex = (currentIndex + 1) % cardIcons.length;
 
-      cardIcons[currentIndex].classList.remove('opacity-0', 'scale-[0.9]');
-      cardIcons[currentIndex].classList.add('opacity-100', 'scale-100');
+    cardIcons[currentIndex].classList.remove('opacity-0', 'scale-[0.9]');
+    cardIcons[currentIndex].classList.add('opacity-100', 'scale-100');
+  }
+
+  setInterval(showNextIcon, 2000);
+
+  // Example usage
+  timer.value = new Timer();
+
+  setTimeout(() => {
+    timer.value.stop(); // Stop the timer after 60 seconds
+    concludingMessage.value = "Longer than 60sec? Rly? Ur fired.";
+  }, 20000);
+});
+
+// watch if cardNumber equals 4242424242424242
+watch(cardNumber, (value) => {
+  if (value === '4242424242424242') {
+
+    timer.value.stop()
+
+    //different messages every 10 seconds of timer.value.getTime. Lower is better
+
+    if (timer.value.getTime() < 4) {
+      concludingMessage.value = 'You are a 10x engineer! wtf omg so fast';
+    } else if (timer.value.getTime() < 5) {
+      concludingMessage.value = 'You are a 5x engineer! teh fuak so fast!';
+    } else if (timer.value.getTime() < 8) {
+      concludingMessage.value = 'You are a 2x engineer! Not bad!';
+    } else if (timer.value.getTime() < 10) {
+      concludingMessage.value = 'You are a 1x engineer! Lol like.. just normal.';
+    } else if (timer.value.getTime() < 15) {
+      concludingMessage.value = 'You are a 0.5x engineer! You are on thin ice!';
+    } else {
+      concludingMessage.value = 'You are a 0.1x engineer! You are fired!';
     }
 
-    setInterval(showNextIcon, 2000);
-  });
+    showConcludingMessage.value = true;
+  }
 });
+
+
+
+
+class Timer {
+  constructor() {
+    this.time = 0; // Initialize time to 0 seconds
+    this.intervalId = null; // Initialize intervalId to null
+  }
+
+  start() {
+    if (this.intervalId !== null) return; // Prevent multiple intervals
+
+    this.intervalId = setInterval(() => {
+      this.time += 0.01; // Increment time by 1 second
+    }, 10); // Set interval to 1 second
+  }
+
+  stop() {
+    if (this.intervalId === null) return; // If no interval is running, do nothing
+
+    clearInterval(this.intervalId); // Clear the interval
+    this.intervalId = null; // Reset intervalId to null
+  }
+
+  getTime() {
+    return this.time; // Return the current time
+  }
+}
+
 
 
 </script>
