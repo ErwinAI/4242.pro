@@ -26,7 +26,7 @@
               <div class="relative w-full bg-white">
                 <div class="relative">
           <span class="block m-0 p-0 relative w-full">
-            <input @focusin="timer.start()" v-model="cardNumber" class="rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="cc-number" autocorrect="off" spellcheck="false" id="cardNumber" name="cardNumber" type="text" inputmode="numeric" aria-label="Kaartnummer" placeholder="1234 1234 1234 1234" aria-invalid="false" aria-describedby="" data-1p-ignore="false">
+            <input @input="limitCardNumberLength" @focusin="timer.start()" v-model="cardNumber" class="rounded-none appearance-none bg-white border-0 text-[#1a1a1ae6] text-[16px] h-11 leading-normal px-3 py-2 relative transition-[box-shadow_0.08s_ease-in,color_0.08s_ease-in,filter_50000s] w-full animate-[1ms_ease_0s_1_normal_none_running_native-autofill-out] overflow-visible m-0" autocomplete="cc-number" autocorrect="off" spellcheck="false" id="cardNumber" name="cardNumber" type="text" inputmode="numeric" aria-label="Kaartnummer" placeholder="1234 1234 1234 1234" aria-invalid="false" aria-describedby="" data-1p-ignore="false">
           </span>
                 </div>
                 <div class="flex items-center pointer-events-none absolute right-0 top-0 h-full pr-2 z-[3]" style="opacity: 1;">
@@ -166,9 +166,15 @@ onMounted(() => {
 
   setTimeout(() => {
     timer.value.stop(); // Stop the timer after 60 seconds
-    concludingMessage.value = "Longer than 60sec? Rly? Ur fired.";
+    concludingMessage.value = "Longer than 20sec? Rly? Ur fired.";
   }, 20000);
 });
+
+const limitCardNumberLength = () => {
+  if (cardNumber.value.length > 16) {
+    cardNumber.value = cardNumber.value.slice(0, 16);
+  }
+};
 
 // watch if cardNumber equals 4242424242424242
 watch(cardNumber, (value) => {
@@ -188,8 +194,6 @@ watch(cardNumber, (value) => {
       concludingMessage.value = 'You are a 1x engineer! Lol like.. just normal.';
     } else if (timer.value.getTime() < 15) {
       concludingMessage.value = 'You are a 0.5x engineer! You are on thin ice!';
-    } else {
-      concludingMessage.value = 'You are a 0.1x engineer! You are fired!';
     }
 
     showConcludingMessage.value = true;
