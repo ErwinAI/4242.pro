@@ -7,7 +7,7 @@ export default defineComponent({
 </script>
 
 <template>
-    <option value="" disabled="" hidden="" class="hidden"></option>
+    <option value="" disabled="" hidden="" class="hidden">Country</option>
     <option value="AF">Afghanistan</option>
     <option value="AX">Åland</option>
     <option value="AL">Albanië</option>
