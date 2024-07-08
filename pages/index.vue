@@ -167,7 +167,6 @@ const validateResults = () => {
       || inputName.value === '' || inputCountry.value === '' || inputAddressOne.value === '' || inputCity.value === '' || inputZipCode.value === '')
       || isGameModeCard.value && (inputCardNumber.value === '' || inputExpiry.value === '' || inputCvc.value === '')) {
     concludingMessage.value = 'Oh rekt you didn\'t fill all inputs lmao';
-    console.log(isGameModeCard.value, inputCardNumber.value, inputExpiry.value, inputCvc.value)
     showConcludingMessage.value = true;
     inputDeclaredValid.value = false;
     return;
@@ -226,33 +225,33 @@ const validateResults = () => {
     return false;
   } else {
     // Different messages every 2 seconds of timer.value.getTime. Lower is better
-    if ((isGameModeFull && timer.value.getTime() < 3) || (isGameModeCard && timer.value.getTime() < 1)) {
+    if ((isGameModeFull.value && timer.value.getTime() < 3) || (isGameModeCard.value && timer.value.getTime() < 1)) {
       concludingMessage.value = 'Ehhh are you sure you didn\'t cheat??';
-    } else if ((isGameModeFull && timer.value.getTime() < 6) || (isGameModeCard && timer.value.getTime() < 2)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 6) || (isGameModeCard.value && timer.value.getTime() < 2)) {
       concludingMessage.value = 'Absolute f$#cking legend! I bet your code must compile before you even type haha!';
-    } else if ((isGameModeFull && timer.value.getTime() < 8) || (isGameModeCard && timer.value.getTime() < 3)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 8) || (isGameModeCard.value && timer.value.getTime() < 3)) {
       concludingMessage.value = 'You have a keyboard with keys that type a whole credit card at once or smth lawl??';
-    } else if ((isGameModeFull && timer.value.getTime() < 10) || (isGameModeCard && timer.value.getTime() < 4)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 10) || (isGameModeCard.value && timer.value.getTime() < 4)) {
       concludingMessage.value = 'Absolute fire but maybe try again cause there\'s more fun messages lol pls try harder and read those, took me so long to come up with them =\')';
-    } else if ((isGameModeFull && timer.value.getTime() < 13) || (isGameModeCard && timer.value.getTime() < 5)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 13) || (isGameModeCard.value && timer.value.getTime() < 5)) {
       concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the messages for <8sec';
-    } else if ((isGameModeFull && timer.value.getTime() < 16) || (isGameModeCard && timer.value.getTime() < 6)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 16) || (isGameModeCard.value && timer.value.getTime() < 6)) {
       concludingMessage.value = 'Sick score but don\'t share this because your friends might unfollow you, you can do better!';
-    } else if ((isGameModeFull && timer.value.getTime() < 19) || (isGameModeCard && timer.value.getTime() < 7)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 19) || (isGameModeCard.value && timer.value.getTime() < 7)) {
       concludingMessage.value = 'Pretty fast. Did you grease up your keyboard before attempting this round?';
-    } else if ((isGameModeFull && timer.value.getTime() < 22) || (isGameModeCard && timer.value.getTime() < 8)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 22) || (isGameModeCard.value && timer.value.getTime() < 8)) {
       concludingMessage.value = 'Eh oke nice I guess haha but try harder okay?';
-    } else if ((isGameModeFull && timer.value.getTime() < 25) || (isGameModeCard && timer.value.getTime() < 10)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 25) || (isGameModeCard.value && timer.value.getTime() < 10)) {
       concludingMessage.value = 'This is average what were you doing? Can\'t afford typo\'s okay try again.';
-    } else if ((isGameModeFull && timer.value.getTime() < 28) || (isGameModeCard && timer.value.getTime() < 11)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 28) || (isGameModeCard.value && timer.value.getTime() < 11)) {
       concludingMessage.value = 'LOL did you forget to turn on your keyboard or smth?';
-    } else if ((isGameModeFull && timer.value.getTime() < 31) || (isGameModeCard && timer.value.getTime() < 12)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 31) || (isGameModeCard.value && timer.value.getTime() < 12)) {
       concludingMessage.value = 'Mate were you looking up validation rules on stack overflow first? C\'mon this is too slow!';
-    } else if ((isGameModeFull && timer.value.getTime() < 34) || (isGameModeCard && timer.value.getTime() < 13)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 34) || (isGameModeCard.value && timer.value.getTime() < 13)) {
       concludingMessage.value = 'Did you get scared? Cause your keyboard seems to be ghost typing LOL this is way too slow try again'
-    } else if ((isGameModeFull && timer.value.getTime() < 37) || (isGameModeCard && timer.value.getTime() < 14)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 37) || (isGameModeCard.value && timer.value.getTime() < 14)) {
       concludingMessage.value = 'I ran out of things to say here like srsly what are you doing???!';
-    } else if ((isGameModeFull && timer.value.getTime() < 40) || (isGameModeCard && timer.value.getTime() < 15)) {
+    } else if ((isGameModeFull.value && timer.value.getTime() < 40) || (isGameModeCard.value && timer.value.getTime() < 15)) {
       concludingMessage.value = 'Ugh at this point I think maybe you\'re typing with your feet or smth wtf is this???';
     } else {
       concludingMessage.value = 'You\'re not even trying anymore are you? I\'m disappointed. Hand in your programmer badge NOW.';
