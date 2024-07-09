@@ -641,7 +641,7 @@ class Timer {
                               d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
                             />
                           </svg>
-                          <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
+                          <a :href="'https://x.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
                         </div>
                       </td>
                       <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
