@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: 'http://localhost:3000/',
+    url: 'https://www.4242.pro/',
   },
 
   compatibilityDate: '2024-07-06',
