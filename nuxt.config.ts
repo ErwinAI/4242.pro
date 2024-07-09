@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: false },
+  debug: false,
   css: ['~/assets/css/main.css'],
 
   postcss: {
@@ -19,5 +20,5 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-06',
-  modules: ["nuxt-og-image"]
+  modules: ['nuxt-og-image'],
 })
