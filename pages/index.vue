@@ -28,33 +28,66 @@ profanity.addWords(['hitler'])
 
 const isBrowser = typeof window !== 'undefined'
 const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
-const leaderboard = ref([
-  { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
-  { id: 2, username: 'erwinai', time: 6.45, mode: 'card' },
-  { id: 3, username: 'yomamamfast', time: 7.89, mode: 'full' },
-])
+const isUsernameDisabled = computed(() => !!username.value)
+const leaderboard = ref([])
+
+// const leaderboard = ref([
+//   { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
+//   { id: 2, username: 'erwinai', time: 6.45, mode: 'card' },
+//   { id: 3, username: 'yomamamfast', time: 7.89, mode: 'full' },
+// ])
 
 const currentLeaderboardMode = ref('full')
 
+const fetchLeaderboard = async () => {
+  console.log('Fetching leaderboard...')
+  try {
+    nextTick(async () => {
+      const { data, error } = await useFetch('/api/leaderboard')
+      if (error.value) {
+        console.error('Error fetching leaderboard:', error.value)
+        leaderboard.value = [] // Initialize as an empty array on error
+      } else {
+        console.log('Leaderboard fetched:', data.value)
+        leaderboard.value = data.value || [] // Ensure it's an array
+      }
+    })
+  } catch (err) {
+    console.error('Unexpected error fetching leaderboard:', err)
+    leaderboard.value = [] // Initialize as an empty array on error
+  }
+}
+
 const filteredLeaderboard = computed(() => {
-  return leaderboard.value.filter((entry) => entry.mode === currentLeaderboardMode.value)
+  console.log('Filtering leaderboard:', leaderboard.value)
+  console.log('Current mode:', currentLeaderboardMode.value)
+  return leaderboard.value.filter((entry) => {
+    console.log('Entry mode:', entry.mode)
+    return entry.mode === currentLeaderboardMode.value
+  })
 })
 
-const submitScore = () => {
+const submitScore = async () => {
   if (!username.value) return
 
-  localStorage.setItem('username', username.value)
-
-  // Dummy data submission logic
   const newEntry = {
-    id: leaderboard.value.length + 1,
     username: username.value,
     time: timer.value.getTime(),
     mode: gameMode.value,
   }
 
-  leaderboard.value.push(newEntry)
-  leaderboard.value.sort((a, b) => a.time - b.time)
+  const { data, error } = await useFetch('/api/leaderboard', {
+    method: 'POST',
+    body: newEntry,
+  })
+
+  if (!error.value) {
+    leaderboard.value.push(data.value) // Ensure leaderboard.value is an array
+    leaderboard.value.sort((a, b) => a.time - b.time)
+    localStorage.setItem('username', username.value) // Store username in localStorage
+  } else {
+    console.error('Error submitting score:', error.value)
+  }
 }
 
 const timer = ref()
@@ -137,7 +170,7 @@ const onKeydown = (event) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const cardIcons = document.querySelectorAll('.card-icon')
   let currentIndex = 0
 
@@ -159,19 +192,21 @@ onMounted(() => {
       timer.value = new Timer()
     }
   })
-  // Fetch leaderboard from localStorage if available
-  const storedLeaderboard = JSON.parse(localStorage.getItem('leaderboard'))
-  if (storedLeaderboard) {
-    leaderboard.value = storedLeaderboard
-  }
-  watch(
-    leaderboard,
-    (newLeaderboard) => {
-      // Store leaderboard in localStorage
-      localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard))
-    },
-    { deep: true }
-  )
+
+  // // Fetch leaderboard from localStorage if available
+  // const storedLeaderboard = JSON.parse(localStorage.getItem('leaderboard'))
+  // if (storedLeaderboard) {
+  //   leaderboard.value = storedLeaderboard
+  // }
+
+  // watch(
+  //   leaderboard,
+  //   (newLeaderboard) => {
+  //     // Store leaderboard in localStorage
+  //     localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard))
+  //   },
+  //   { deep: true }
+  // )
   // Watch for changes in the username input
   watch(username, (newValue) => {
     // Remove spaces
@@ -183,6 +218,7 @@ onMounted(() => {
       username.value = ''
     }
   })
+  await fetchLeaderboard()
 })
 
 const startGame = () => {
@@ -438,6 +474,7 @@ class Timer {
         <div class="flex flex-col justify-between grow">
           <div class="w-full grow">
             <h1 class="mt-8 text-2xl text-center lg:mt-16">4242.pro</h1>
+
             <p class="mx-4 my-2 text-center">👀 Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap.</p>
 
             <!-- BEFORE GAME / ACCEPTING TERMS -->
@@ -490,12 +527,18 @@ class Timer {
               <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
                 <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
                   <span class="text-gray-500">x.com/</span>
-                  <input v-model="username" placeholder="Enter your X username" class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none" />
+                  <input
+                    v-model="username"
+                    :disabled="isUsernameDisabled"
+                    placeholder="Enter your X username"
+                    class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none"
+                  />
                 </div>
                 <button @click="submitScore" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">Submit Score →</button>
               </div>
 
-              <div v-if="leaderboard.length" class="mt-4">
+              <!-- LEADERBOARD -->
+              <div v-if="hasPlayedGame && leaderboard?.length" class="mt-4">
                 <h2 class="mb-4 text-3xl text-center">Leaderboard</h2>
                 <div class="flex justify-center mb-2">
                   <button
@@ -503,14 +546,14 @@ class Timer {
                     :class="currentLeaderboardMode === 'full' ? 'bg-indigo-500' : 'bg-indigo-700'"
                     class="px-4 py-2 text-white rounded-l-lg hover:bg-indigo-500"
                   >
-                    Full
+                    Full form
                   </button>
                   <button
                     @click="currentLeaderboardMode = 'card'"
                     :class="currentLeaderboardMode === 'card' ? 'bg-indigo-500' : 'bg-indigo-700'"
                     class="px-4 py-2 text-white rounded-r-lg hover:bg-indigo-500"
                   >
-                    Card
+                    Card only
                   </button>
                 </div>
                 <table class="w-11/12 mx-auto mt-6 text-indigo-800 bg-white rounded-lg">
@@ -518,7 +561,7 @@ class Timer {
                     <tr>
                       <th class="px-4 py-2 border-b">Rank</th>
                       <th class="px-4 py-2 border-b">Username</th>
-                      <th class="px-4 py-2 border-b">Time (s)</th>
+                      <th class="px-4 py-2 border-b">Time</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -536,7 +579,9 @@ class Timer {
                           <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
                         </div>
                       </td>
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ entry.time }}</td>
+                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                        {{ entry.time.toFixed(3) }}s
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -565,9 +610,9 @@ class Timer {
           <div class="p-6 space-y-4">
             <div v-if="!isGameModeCard" class="space-y-2">
               <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
+              <!-- :disabled="disableInputs" -->
               <input
                 @focusin="startGame()"
-                :disabled="disableInputs"
                 v-model="inputEmail"
                 class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 id="email"
