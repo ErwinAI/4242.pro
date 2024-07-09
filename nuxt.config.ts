@@ -10,5 +10,10 @@ export default defineNuxtConfig({
     },
   },
 
-  compatibilityDate: '2024-07-06'
+  site: {
+    url: 'http://localhost:3000/',
+  },
+
+  compatibilityDate: '2024-07-06',
+  modules: ["nuxt-og-image"]
 })

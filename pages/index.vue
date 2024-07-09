@@ -2,12 +2,27 @@
 import CardIcon from "~/components/CardIcon.vue";
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from "assets/js/validators.js";
 
+//******** OG IMAGE SHIZZLE HERE ****************//
+
+// check if there is a parameter
+
+defineOgImageComponent('NuxtSeo', {
+  title: 'Hello OG Image 👋',
+  description: 'Look what at me in dark mode',
+  theme: '#ff0000',
+  colorMode: 'dark',
+})
+
+//******** OG IMAGE SHIZZLE ENDS HERE ****************//
+
+
 const timer = ref()
 const concludingMessage = ref("GOGoGOGO11!1!! Ur product manager and a senior engineer are already judging you.");
 const showConcludingMessage = ref(false);
 const hasAcceptedTerms = ref(false);
 const hasPlayedGame = ref(false);
 const gameMode = ref('full');
+const shareShortCode = ref('');
 
 const inputEmail = ref('');
 const inputEmailInvalid = ref('');
@@ -119,6 +134,35 @@ const stopGame = () => {
 
   if(outcome) {
 
+  }
+};
+
+const shareGame = async () => {
+  shareShortCode.value = ''
+
+  // Grab score in seconds and a placeholder name
+  const score = timer.value.getTime();
+  const name = 'Erwin';
+  const data = { score, name };
+
+  try {
+    // Use $fetch to call the encrypt API
+    const { data: response, error } = await useFetch('/api/encrypt', {
+      method: 'POST',
+      body: { code: JSON.stringify(data) },
+    });
+
+    if (error.value) {
+      console.log(error.value)
+      //TODO: someone trying to cheat and just giv random code? hell nah
+    }
+
+    // Store the encrypted shortcode
+    shareShortCode.value = response.value.encryptedCode;
+    console.log('Encrypted Shortcode:', response.value.encryptedCode);
+  } catch (error) {
+    console.error('Error encrypting game data:', error);
+    shareShortCode.value = null;
   }
 };
 
@@ -342,10 +386,11 @@ class Timer {
                 </div>
               </div>
 
-              <p class="mt-8 lg:mt-32 text-4xl text-center"
-                 v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                {{ timer ? timer.getTime().toFixed(4) : '' }} seconds
-              </p>
+              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p class="mt-8 lg:mt-32 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+                <button v-if="!shareShortCode" @click="shareGame()" class="mt-4 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Share! (experiment)</button>
+                <p v-if="shareShortCode" class="mt-2 text-sm italic text-center break-all">Here is your shareable link: <a :href="'https://4242.pro/s/' + shareShortCode" target="_blank" class="underline">https://4242.pro/s/{{ shareShortCode }}</a></p>
+              </template>
 
               <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
 
