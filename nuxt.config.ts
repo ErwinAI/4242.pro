@@ -10,6 +10,10 @@ export default defineNuxtConfig({
     },
   },
 
+  runtimeConfig: {
+    secretShareKey: '',
+  },
+
   site: {
     url: 'http://localhost:3000/',
   },

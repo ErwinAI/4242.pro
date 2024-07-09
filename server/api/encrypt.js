@@ -1,15 +1,16 @@
-// server/api/encrypt.js
 import { encrypt } from '../utils/cryptoUtils';
 
 export default defineEventHandler(async (event) => {
     const { code } = await readBody(event);
 
-    // const { data: response, error } = await useFetch(`/api/encrypt?code=${encodeURIComponent(JSON.stringify(data))}`);
+    const { secretShareKey } = useRuntimeConfig(event)
+
     // TODO: validate that code is an object (try to parse) and has fields score and name
+    //   but whatever if someone shares a modified code it's their problem lol
 
     if (code) {
         try {
-            const encryptedCode = encrypt(code);
+            const encryptedCode = encrypt(code, secretShareKey);
 
             // For now, just send the encrypted code back
             return { encryptedCode };

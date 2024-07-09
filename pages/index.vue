@@ -2,20 +2,6 @@
 import CardIcon from "~/components/CardIcon.vue";
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from "assets/js/validators.js";
 
-//******** OG IMAGE SHIZZLE HERE ****************//
-
-// check if there is a parameter
-
-defineOgImageComponent('NuxtSeo', {
-  title: 'Hello OG Image 👋',
-  description: 'Look what at me in dark mode',
-  theme: '#ff0000',
-  colorMode: 'dark',
-})
-
-//******** OG IMAGE SHIZZLE ENDS HERE ****************//
-
-
 const timer = ref()
 const concludingMessage = ref("GOGoGOGO11!1!! Ur product manager and a senior engineer are already judging you.");
 const showConcludingMessage = ref(false);
@@ -143,23 +129,18 @@ const shareGame = async () => {
   // Grab score in seconds and a placeholder name
   const score = timer.value.getTime();
   const name = 'Erwin';
-  const data = { score, name };
+  const mode = gameMode.value;
+  const data = { score, name, mode };
 
   try {
     // Use $fetch to call the encrypt API
-    const { data: response, error } = await useFetch('/api/encrypt', {
+    const response = await $fetch('/api/encrypt', {
       method: 'POST',
       body: { code: JSON.stringify(data) },
     });
 
-    if (error.value) {
-      console.log(error.value)
-      //TODO: someone trying to cheat and just giv random code? hell nah
-    }
-
     // Store the encrypted shortcode
-    shareShortCode.value = response.value.encryptedCode;
-    console.log('Encrypted Shortcode:', response.value.encryptedCode);
+    shareShortCode.value = response.encryptedCode;
   } catch (error) {
     console.error('Error encrypting game data:', error);
     shareShortCode.value = null;
@@ -278,7 +259,7 @@ const validateResults = () => {
     } else if ((isGameModeFull.value && timer.value.getTime() < 10) || (isGameModeCard.value && timer.value.getTime() < 4)) {
       concludingMessage.value = 'Absolute fire but maybe try again cause there\'s more fun messages lol pls try harder and read those, took me so long to come up with them =\')';
     } else if ((isGameModeFull.value && timer.value.getTime() < 13) || (isGameModeCard.value && timer.value.getTime() < 5)) {
-      concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the messages for <8sec';
+      concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the other messages lol';
     } else if ((isGameModeFull.value && timer.value.getTime() < 16) || (isGameModeCard.value && timer.value.getTime() < 6)) {
       concludingMessage.value = 'Sick score but don\'t share this because your friends might unfollow you, you can do better!';
     } else if ((isGameModeFull.value && timer.value.getTime() < 19) || (isGameModeCard.value && timer.value.getTime() < 7)) {
