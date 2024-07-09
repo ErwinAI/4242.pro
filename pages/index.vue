@@ -19,6 +19,7 @@ const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
 const isUsernameSubmitted = ref(isBrowser ? JSON.parse(localStorage.getItem('isUsernameSubmitted')) || false : false) // Load from localStorage
 const isUsernameDisabled = computed(() => isUsernameSubmitted.value) // Update computed property
 const leaderboard = ref([])
+const userRank = ref(null)
 
 // const leaderboard = ref([
 //   { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
@@ -50,6 +51,59 @@ const filteredLeaderboard = computed(() => {
     return entry.mode === currentLeaderboardMode.value
   })
 })
+
+const fetchLeaderboardAndRank = async (username, mode) => {
+  try {
+    const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
+    if (leaderboardError.value) {
+      console.error('Error fetching leaderboard:', leaderboardError.value)
+      leaderboard.value = []
+    } else {
+      leaderboard.value = leaderboardData.value || []
+    }
+
+    const { data: rankData, error: rankError } = await useFetch(`/api/leaderboard/rank?username=${username}&mode=${mode}`)
+    if (rankError.value) {
+      console.error('Error fetching user rank:', rankError.value)
+      userRank.value = null
+    } else {
+      userRank.value = rankData.value.rank
+      if (userRank.value <= 3) {
+        const jsConfetti = new JSConfetti()
+        setTimeout(() => {
+          jsConfetti.addConfetti({
+            emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+          })
+        }, 7000)
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error fetching leaderboard and rank:', err)
+    leaderboard.value = []
+    userRank.value = null
+  }
+}
+
+const fetchUserRank = async (username, mode) => {
+  try {
+    const { data, error } = await useFetch(`/api/leaderboard/rank?username=${username}&mode=${mode}`)
+    if (error.value) {
+      console.error('Error fetching user rank:', error.value)
+      userRank.value = null
+    } else {
+      userRank.value = data.value.rank
+      if (userRank.value <= 3) {
+        const jsConfetti = new JSConfetti()
+        await jsConfetti.addConfetti({
+          emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+        })
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error fetching user rank:', err)
+    userRank.value = null
+  }
+}
 
 const isScoreSubmitted = ref(false)
 const isLoadingSubmission = ref(false)
@@ -90,9 +144,7 @@ const submitScore = async () => {
     await jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
-    setTimeout(() => {
-      jsConfetti.clearCanvas()
-    }, 5000)
+    await fetchLeaderboardAndRank(username.value, gameMode.value)
   } else {
     console.error('Error submitting score:', error.value)
     alert('Error submitting your score, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
@@ -232,7 +284,7 @@ onMounted(async () => {
       username.value = ''
     }
   })
-  await fetchLeaderboard()
+  // await fetchLeaderboard() – NO NEED ANYMORE WE FETCHING AFTER SUBMISSION SCORE
 })
 
 const startGame = () => {
@@ -315,6 +367,8 @@ const restartGame = () => {
   localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
 
   shareShortCode.value = ''
+  userRank.value = null
+  leaderboard.value = []
 }
 
 const disableInputs = computed(() => {
@@ -597,9 +651,10 @@ class Timer {
           </div>
 
           <div class="w-full h-[2px] mb-4 bg-indigo-500"></div>
-          <div class="py-4 text-sm text-center bg-indigo-800 rounded-md">
+          <div class="px-2 py-4 text-xs text-center bg-indigo-800 rounded-md">
             <p>
-              Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a>. I got
+              Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a> and
+              <a href="https://x.com/sobedominik" target="_blank" class="underline cursor-pointer hover:text-gray-200">@sobedominik</a>. We got
               inspired after having to enter these details four hundred trillion times. May the 4 be with you 2!
             </p>
           </div>
@@ -924,7 +979,17 @@ class Timer {
                   Card only
                 </button>
               </div>
-              <table class="w-8/12 mx-auto mt-6 bg-white rounded-lg shadow-lg text-zinc-800">
+
+              <!-- User rank display -->
+              <div v-if="userRank !== null" class="mt-6 text-center">
+                <p>
+                  Your are currently ranking: <span class="text-indigo-600 text-semibold">{{ userRank }}</span>
+                </p>
+                <p v-if="userRank === 1">🎉 Congratulations! You are the top scorer! 🥇</p>
+                <p v-if="userRank === 2">🎉 Great job! You are the second top scorer! 🥈</p>
+                <p v-if="userRank === 3">🎉 Well done! You are the third top scorer! 🥉</p>
+              </div>
+              <table class="w-8/12 mx-auto mt-5 bg-white rounded-lg shadow-lg text-zinc-800">
                 <thead>
                   <tr>
                     <th class="px-4 py-2 border-b">Rank</th>
@@ -933,8 +998,18 @@ class Timer {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(entry, index) in filteredLeaderboard" :key="entry.id" class="text-center">
-                    <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ index + 1 }}</td>
+                  <tr
+                    v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
+                    :key="entry.id"
+                    :class="{ 'bg-yellow-50': entry.username === username.value }"
+                    class="text-center"
+                  >
+                    <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                      <span v-if="index === 0">🥇</span>
+                      <span v-if="index === 1">🥈</span>
+                      <span v-if="index === 2">🥉</span>
+                      {{ index + 1 }}
+                    </td>
                     <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
                       <div class="flex items-center justify-start py-1 ml-16">
                         <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->

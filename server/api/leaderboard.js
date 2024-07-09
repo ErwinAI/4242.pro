@@ -43,11 +43,21 @@ export default defineEventHandler(async (event) => {
     }
   } else if (method === 'GET') {
     try {
-      const response = await databases.listDocuments(databaseId, collectionId)
+      const response = await databases.listDocuments(databaseId, collectionId, [Query.orderDesc('time'), Query.limit(35)])
       console.log('GET | Appwrite leaderboard API called with response:', response)
       return response.documents
     } catch (error) {
       console.error('Error fetching documents:', error)
+      return { error: error.message }
+    }
+  } else if (method === 'GET' && event.node.req.url.includes('/rank')) {
+    const { username, mode } = getQuery(event)
+    try {
+      const response = await databases.listDocuments(databaseId, collectionId, [Query.equal('mode', mode), Query.orderAsc('time')])
+      const rank = response.documents.findIndex((entry) => entry.username === username) + 1
+      return { rank }
+    } catch (error) {
+      console.error('Error fetching rank:', error)
       return { error: error.message }
     }
   } else {
