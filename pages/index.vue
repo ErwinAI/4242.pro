@@ -306,6 +306,8 @@ const restartGame = () => {
   inputAddressTwo.value = ''
   inputCity.value = ''
   inputZipCode.value = ''
+  isUsernameSubmitted.value = false
+  localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
 }
 
 const disableInputs = computed(() => {
@@ -508,14 +510,15 @@ class Timer {
                 <div class="flex items-center font-bold text-white">Game modes</div>
                 <div
                   class="px-4 py-2 border-white cursor-pointer"
-                  @click="gameMode = 'full'"
+                  @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
                   :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                 >
                   Full form
                 </div>
+
                 <div
                   class="px-4 py-2 border-white cursor-pointer"
-                  @click="gameMode = 'card'"
+                  @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
                   :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                 >
                   Card only
@@ -538,8 +541,8 @@ class Timer {
               <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
               <!-- Username input and leaderboard -->
-              <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
-              <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
+              <div v-if="true" class="max-w-sm mx-auto mt-4">
+                <!-- <div v-if="hasPlayedGame && inputDeclaredValid  && !isUsernameSubmitted" class="max-w-sm mx-auto mt-4"> -->
                 <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
                   <span class="text-gray-500">x.com/</span>
                   <!-- :disabled="isUsernameDisabled" -->
@@ -550,7 +553,28 @@ class Timer {
                     class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none"
                   />
                 </div>
-                <button @click="submitScore" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">Submit Score →</button>
+                <button
+                  @click="submitScore"
+                  class="flex items-center justify-center px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white border-indigo-600 rounded-lg hover:bg-teal-50"
+                >
+                  <svg
+                    v-if="isLoading"
+                    class="w-4 h-4 text-indigo-700 mr-1.5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                  >
+                    <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+                    <path
+                      fill="currentColor"
+                      d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
+                    >
+                      <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
+                    </path>
+                  </svg>
+                  {{ isLoading ? 'Submitting' : 'Submit' }} Score →
+                </button>
               </div>
 
               <!-- LEADERBOARD -->
