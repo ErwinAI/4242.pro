@@ -20,11 +20,10 @@ if (code) {
 
     const mode = decryptedCode.value.mode === 'full' ? ' the full checkout form ' : ' the creditcard form ';
 
-    defineOgImageComponent('NuxtSeo', {
-      title: decryptedCode.value.name + ' has completed ' + mode + ' in ' + decryptedCode.value.score.toFixed(4) + ' sec.',
-      description: 'Want to try and beat them? 4242.pro',
-      theme: '#4f46e5',
-      colorMode: 'dark',
+    defineOgImageComponent('Frame', {
+      description: decryptedCode.value.name + ' has completed ' + mode + ' in ' + decryptedCode.value.score.toFixed(4) + ' sec.',
+      title: '4242.pro - R u 10x dev?',
+      bg: 'linear-gradient(to bottom right, #4f46e5, #1e1b4b)'
     })
 
     // redirecting user with nuxt
