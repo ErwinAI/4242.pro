@@ -381,7 +381,7 @@ class Timer {
               <button @click="restartGame()" v-if="hasPlayedGame" class="mt-20 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Play again</button>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="text-white text-lg my-4 text-center font-bold">OR</p>
+                <p v-if="!shareShortCode && showConcludingMessage" class="text-white text-lg my-4 text-center font-bold">OR</p>
                 <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
                   <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                          placeholder="Your name" autocorrect="off" spellcheck="false" data-1p-ignore="true">
