@@ -4,8 +4,6 @@ import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
-const jsConfetti = new JSConfetti()
-
 //******** OG IMAGE SHIZZLE HERE ****************//
 
 // check if there is a parameter
@@ -71,16 +69,20 @@ const filteredLeaderboard = computed(() => {
   })
 })
 
+const isScoreSubmitted = ref(false)
+const isLoadingSubmission = ref(false)
+
 const submitScore = async () => {
   if (!username.value) return
-
+  isLoadingSubmission.value = true
+  const jsConfetti = new JSConfetti()
   const newEntry = {
     username: username.value,
     time: timer.value.getTime(),
     mode: gameMode.value,
   }
 
-  const { data, error, isLoading } = await useFetch('/api/leaderboard', {
+  const { data, error } = await useFetch('/api/leaderboard', {
     method: 'POST',
     body: newEntry,
   })
@@ -102,15 +104,18 @@ const submitScore = async () => {
     localStorage.setItem('username', username.value) // Store username in localStorage
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
+    isScoreSubmitted.value = true
     jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
     setTimeout(() => {
       jsConfetti.clearCanvas()
-    }, 1000)
+    }, 5000)
   } else {
     console.error('Error submitting score:', error.value)
+    alert('Error submitting your score, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
   }
+  isLoadingSubmission.value = false
 }
 
 const timer = ref()
@@ -316,6 +321,7 @@ const restartGame = () => {
   inputCity.value = ''
   inputZipCode.value = ''
   isUsernameSubmitted.value = false
+  isScoreSubmitted.value = false
   localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
 }
 
@@ -538,7 +544,7 @@ class Timer {
               </div>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 text-4xl text-center lg:mt-32">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+                <p class="mt-8 text-4xl text-center lg:mt-32">{{ timer ? timer.getTime().toFixed(5) : '' }} seconds</p>
                 <button v-if="!shareShortCode" @click="shareGame()" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
                   Share! (experiment)
                 </button>
@@ -554,7 +560,7 @@ class Timer {
 
               <!-- Username input and leaderboard -->
               <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
-              <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
+              <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4">
                 <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
                   <span class="text-gray-500">x.com/</span>
                   <!-- :disabled="isUsernameDisabled" -->
@@ -570,7 +576,7 @@ class Timer {
                   class="flex items-center justify-center px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white border-indigo-600 rounded-lg hover:bg-teal-50"
                 >
                   <svg
-                    v-if="isLoading"
+                    v-if="isLoadingSubmission"
                     class="w-4 h-4 text-indigo-700 mr-1.5"
                     xmlns="http://www.w3.org/2000/svg"
                     width="32"
@@ -585,7 +591,7 @@ class Timer {
                       <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
                     </path>
                   </svg>
-                  {{ isLoading ? 'Submitting' : 'Submit' }} Score →
+                  {{ isLoadingSubmission ? 'Submitting' : 'Submit' }} Score →
                 </button>
               </div>
 
