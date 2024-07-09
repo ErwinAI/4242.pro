@@ -183,6 +183,8 @@ const restartGame = () => {
   inputAddressTwo.value = '';
   inputCity.value = '';
   inputZipCode.value = '';
+
+  shareShortCode.value = '';
 };
 
 const disableInputs = computed(() => {
