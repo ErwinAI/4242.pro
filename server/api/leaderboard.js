@@ -1,4 +1,4 @@
-import { Client, Databases, ID } from 'node-appwrite'
+import { Client, Databases, ID, Query } from 'node-appwrite'
 
 const client = new Client()
 client
@@ -19,11 +19,26 @@ export default defineEventHandler(async (event) => {
     console.log('POST | Appwrite leaderboard API called with body:', body)
     const { username, time, mode } = body
     try {
-      const response = await databases.createDocument(databaseId, collectionId, ID.unique(), { username, time, mode })
-      console.log('POST | Appwrite leaderboard API created document with response:', response)
-      return response
+      // Check if a document with the same username and mode exists
+      const existingDocuments = await databases.listDocuments(databaseId, collectionId, [
+        Query.equal('username', username),
+        Query.equal('mode', mode),
+      ])
+
+      if (existingDocuments.total > 0) {
+        // Update the existing document
+        const documentId = existingDocuments.documents[0].$id
+        const response = await databases.updateDocument(databaseId, collectionId, documentId, { time })
+        console.log('POST | Appwrite leaderboard API updated document with response:', response)
+        return response
+      } else {
+        // Create a new document
+        const response = await databases.createDocument(databaseId, collectionId, ID.unique(), { username, time, mode })
+        console.log('POST | Appwrite leaderboard API created document with response:', response)
+        return response
+      }
     } catch (error) {
-      console.error('Error creating document:', error)
+      console.error('Error creating or updating document:', error)
       return { error: error.message }
     }
   } else if (method === 'GET') {

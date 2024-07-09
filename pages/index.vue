@@ -28,7 +28,8 @@ profanity.addWords(['hitler'])
 
 const isBrowser = typeof window !== 'undefined'
 const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
-const isUsernameDisabled = computed(() => !!username.value)
+const isUsernameSubmitted = ref(isBrowser ? JSON.parse(localStorage.getItem('isUsernameSubmitted')) || false : false) // Load from localStorage
+const isUsernameDisabled = computed(() => isUsernameSubmitted.value) // Update computed property
 const leaderboard = ref([])
 
 // const leaderboard = ref([
@@ -82,9 +83,22 @@ const submitScore = async () => {
   })
 
   if (!error.value) {
-    leaderboard.value.push(data.value) // Ensure leaderboard.value is an array
+    // Check if the username already exists in the leaderboard for the current game mode
+    const existingEntryIndex = leaderboard.value.findIndex((entry) => entry.username === username.value && entry.mode === gameMode.value)
+
+    if (existingEntryIndex !== -1) {
+      // Update the existing entry
+      leaderboard.value[existingEntryIndex] = data.value
+    } else {
+      // Add a new entry
+      leaderboard.value.push(data.value)
+    }
+
     leaderboard.value.sort((a, b) => a.time - b.time)
+
     localStorage.setItem('username', username.value) // Store username in localStorage
+    isUsernameSubmitted.value = true // Set to true after successful submission
+    localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
   } else {
     console.error('Error submitting score:', error.value)
   }
@@ -524,9 +538,11 @@ class Timer {
               <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
               <!-- Username input and leaderboard -->
+              <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
               <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
                 <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
                   <span class="text-gray-500">x.com/</span>
+                  <!-- :disabled="isUsernameDisabled" -->
                   <input
                     v-model="username"
                     :disabled="isUsernameDisabled"
@@ -610,9 +626,10 @@ class Timer {
           <div class="p-6 space-y-4">
             <div v-if="!isGameModeCard" class="space-y-2">
               <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
-              <!-- :disabled="disableInputs" -->
+
               <input
                 @focusin="startGame()"
+                :disabled="disableInputs"
                 v-model="inputEmail"
                 class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 id="email"
