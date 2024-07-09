@@ -27,7 +27,7 @@ if (code) {
     })
 
     // redirecting user with nuxt
-    await navigateTo('/')
+    // await navigateTo('/')
 
   } catch (error) {
     console.error('Error fetching decrypted code:', error);

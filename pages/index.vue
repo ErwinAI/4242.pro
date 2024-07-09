@@ -24,6 +24,7 @@ const inputAddressOne = ref('');
 const inputAddressTwo = ref('');
 const inputCity = ref('');
 const inputZipCode = ref('');
+const inputScoreName = ref('');
 
 const cardType = ref('')
 const cardDeclineCode = ref('')
@@ -128,7 +129,7 @@ const shareGame = async () => {
 
   // Grab score in seconds and a placeholder name
   const score = timer.value.getTime();
-  const name = 'Erwin';
+  const name = inputScoreName.value || 'Anonymous';
   const mode = gameMode.value;
   const data = { score, name, mode };
 
@@ -368,16 +369,26 @@ class Timer {
               </div>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 lg:mt-32 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
-                <button v-if="!shareShortCode" @click="shareGame()" class="mt-4 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Share! (experiment)</button>
+                <p class="mt-8 lg:mt-16 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+
                 <p v-if="shareShortCode" class="mt-2 text-sm italic text-center break-all">Here is your shareable link: <a :href="'https://4242.pro/s/' + shareShortCode" target="_blank" class="underline">https://4242.pro/s/{{ shareShortCode }}</a></p>
               </template>
 
               <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
 
-              <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
+              <p class="my-4 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
-              <button @click="restartGame()" v-if="hasPlayedGame" class="mt-4 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Play again</button>
+              <button @click="restartGame()" v-if="hasPlayedGame" class="mt-20 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Play again</button>
+
+              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p class="text-white text-lg my-4 text-center font-bold">OR</p>
+                <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
+                  <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                         placeholder="Your name" autocorrect="off" spellcheck="false" data-1p-ignore="true">
+
+                  <button @click="shareGame()" class="flex h-8 bg-white text-xs items-center text-indigo-600 rounded-md px-2 py-1">Generate share URL</button>
+                </div>
+              </template>
             </template>
 
           </div>
