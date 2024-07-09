@@ -2,6 +2,9 @@
 import { Profanity, ProfanityOptions } from '@2toad/profanity'
 import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
+import JSConfetti from 'js-confetti'
+
+const jsConfetti = new JSConfetti()
 
 //******** OG IMAGE SHIZZLE HERE ****************//
 
@@ -77,7 +80,7 @@ const submitScore = async () => {
     mode: gameMode.value,
   }
 
-  const { data, error } = await useFetch('/api/leaderboard', {
+  const { data, error, isLoading } = await useFetch('/api/leaderboard', {
     method: 'POST',
     body: newEntry,
   })
@@ -99,6 +102,12 @@ const submitScore = async () => {
     localStorage.setItem('username', username.value) // Store username in localStorage
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
+    jsConfetti.addConfetti({
+      emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
+    })
+    setTimeout(() => {
+      jsConfetti.clearCanvas()
+    }, 1000)
   } else {
     console.error('Error submitting score:', error.value)
   }
@@ -484,7 +493,10 @@ class Timer {
 </script>
 
 <template>
-  <div class="h-full min-h-screen h-100%">
+  <div class="h-full min-h-screen h-100% relative">
+    <div v-if="username" class="absolute top-3 left-3 border-2 border-white/50 rounded-full px-1.5 py-0.5 text-xs text-white font-mono">
+      @{{ username }}
+    </div>
     <div class="flex flex-col h-full lg:flex-row">
       <div class="lg:w-[40%] flex bg-indigo-600 font-mono text-white p-4">
         <div class="flex flex-col justify-between grow">
@@ -541,8 +553,8 @@ class Timer {
               <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
               <!-- Username input and leaderboard -->
-              <div v-if="true" class="max-w-sm mx-auto mt-4">
-                <!-- <div v-if="hasPlayedGame && inputDeclaredValid  && !isUsernameSubmitted" class="max-w-sm mx-auto mt-4"> -->
+              <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
+              <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
                 <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
                   <span class="text-gray-500">x.com/</span>
                   <!-- :disabled="isUsernameDisabled" -->
