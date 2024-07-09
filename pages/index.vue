@@ -141,6 +141,8 @@ const inputValidators = {
 const isGameModeFull = computed(() => gameMode.value === 'full')
 const isGameModeCard = computed(() => gameMode.value === 'card')
 
+const isGameRunning = computed(() => timer.value?.isRunning() || false)
+
 /*
 TODO:
  - Build overview of favorite indie hackers, products, and tools
@@ -524,174 +526,75 @@ class Timer {
 
             <!-- CURRENT STATE OR OUTCOME OF GAME -->
             <template v-else>
-              <div class="flex items-center justify-center mx-auto mt-8 mb-5 font-bold text-center text-white">↓ Pick your game mode ↓</div>
-              <div class="grid max-w-sm grid-cols-2 mx-auto gap-x-2">
-                <div
-                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
-                  @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
-                  :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
-                >
-                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
-                      <path
-                        d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
-                      />
-                      <path
-                        d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
-                      />
-                      <path
-                        d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
-                      />
-                    </g>
-                  </svg>
-                  Full form
-                </div>
+              <p class="mx-3 mt-12 mb-16 text-2xl italic text-center text-indigo-100" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
-                <div
-                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
-                  @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
-                  :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
-                >
-                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
-                    <g fill="currentColor">
-                      <path
-                        d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
-                      />
-                      <path
-                        d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
-                      />
-                    </g>
-                  </svg>
-                  Card only
-                </div>
-              </div>
-
-              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 text-4xl text-center lg:mt-16">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
-              </template>
-
-              <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
-
-              <p class="my-4 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
-
-              <!-- Username input and leaderboard -->
-              <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
-              <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4">
-                <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
-                  <span class="text-gray-500">x.com/</span>
-                  <!-- :disabled="isUsernameDisabled" -->
-                  <input
-                    v-model="username"
-                    :disabled="isUsernameDisabled"
-                    placeholder="Enter your X username"
-                    class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none"
-                  />
-                </div>
-                <button
-                  @click="submitScore"
-                  class="flex items-center justify-center px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white border-indigo-600 rounded-lg hover:bg-teal-50"
-                >
-                  <svg
-                    v-if="isLoadingSubmission"
-                    class="w-4 h-4 text-indigo-700 mr-1.5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
+              <div class="contents" v-if="!isGameRunning">
+                <div class="flex items-center justify-center mx-auto mt-8 mb-5 font-bold text-center text-white">↓ Pick your game mode ↓</div>
+                <div class="grid max-w-sm grid-cols-2 mx-auto gap-x-2">
+                  <div
+                    class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
+                    @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
+                    :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
-                    <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
-                    <path
-                      fill="currentColor"
-                      d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
-                    >
-                      <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
-                    </path>
-                  </svg>
-                  {{ isLoadingSubmission ? 'Submitting' : 'Submit' }} Score →
-                </button>
-              </div>
-
-              <!-- LEADERBOARD -->
-              <div v-if="hasPlayedGame && leaderboard?.length" class="mt-4">
-                <h2 class="mb-4 text-3xl text-center">Leaderboard</h2>
-                <div class="flex justify-center mb-2">
-                  <button
-                    @click="currentLeaderboardMode = 'full'"
-                    :class="currentLeaderboardMode === 'full' ? 'bg-indigo-500' : 'bg-indigo-700'"
-                    class="px-4 py-2 text-white rounded-l-lg hover:bg-indigo-500"
-                  >
+                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
+                        <path
+                          d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
+                        />
+                        <path
+                          d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
+                        />
+                        <path
+                          d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
+                        />
+                      </g>
+                    </svg>
                     Full form
-                  </button>
-                  <button
-                    @click="currentLeaderboardMode = 'card'"
-                    :class="currentLeaderboardMode === 'card' ? 'bg-indigo-500' : 'bg-indigo-700'"
-                    class="px-4 py-2 text-white rounded-r-lg hover:bg-indigo-500"
+                  </div>
+
+                  <div
+                    class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
+                    @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
+                    :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
+                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
+                      <g fill="currentColor">
+                        <path
+                          d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                        />
+                        <path
+                          d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
+                        />
+                      </g>
+                    </svg>
                     Card only
-                  </button>
+                  </div>
                 </div>
-                <table class="w-11/12 mx-auto mt-6 text-indigo-800 bg-white rounded-lg">
-                  <thead>
-                    <tr>
-                      <th class="px-4 py-2 border-b">Rank</th>
-                      <th class="px-4 py-2 border-b">Username</th>
-                      <th class="px-4 py-2 border-b">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(entry, index) in filteredLeaderboard" :key="entry.id" class="text-center">
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ index + 1 }}</td>
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                        <div class="flex items-center justify-start py-1 ml-8">
-                          <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->
-                          <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                            <path
-                              fill="#888888"
-                              d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
-                            />
-                          </svg>
-                          <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
-                        </div>
-                      </td>
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                        {{ entry.time.toFixed(3) }}s
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
+              <button
+                @click="restartGame()"
+                v-if="hasPlayedGame"
+                class="flex px-4 mt-8 py-2 mx-auto text-indigo-600 bg-white rounded-lg scale-[1.15] hover:scale-[1.16] transition-transform hover:bg-teal-50"
+              >
+                Play again →
+              </button>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
-                  Here is your shareable link (click to copy):
-                  <span
-                    class="cursor-pointer hover:underline"
-                    :class="hasCopiedShareLink ? 'text-green-200' : ''"
-                    @click="copyShareLink('4242.pro/s/' + shareShortCode)"
-                    >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
-                  >
+                <p class="mt-8 text-center lg:mt-16">
+                  <span class="text-4xl" :class="hasPlayedGame ? 'font-bold' : ''"> {{ timer ? timer.getTime().toFixed(4) : '' }}</span
+                  ><span class="text-2xl"> seconds</span>
                 </p>
-                <p v-if="!shareShortCode && showConcludingMessage" class="my-4 text-lg font-bold text-center text-white">OR</p>
-                <div v-if="!shareShortCode && showConcludingMessage" class="flex justify-center mt-4 gap-x-2">
-                  <input
-                    type="text"
-                    v-model="inputScoreName"
-                    class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Your name"
-                    autocorrect="off"
-                    spellcheck="false"
-                    data-1p-ignore="true"
-                  />
-
-                  <button @click="shareGame()" class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white rounded-md">
-                    Generate share URL
-                  </button>
-                </div>
               </template>
 
-              <button @click="restartGame()" v-if="hasPlayedGame" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
-                Play again
-              </button>
+              <p class="flex items-center justify-center mt-2 text-sm italic text-center text-indigo-300" v-if="!timer.hasBeenActivated()">
+                <svg class="mr-2 text-white size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="0" fill="currentColor">
+                    <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
+                    <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
+                  </circle>
+                </svg>
+                Starts wen focussing on any input
+              </p>
             </template>
           </div>
 
@@ -706,7 +609,7 @@ class Timer {
       </div>
 
       <div class="lg:w-[60%] bg-gray-100">
-        <div class="w-full max-w-xl mx-auto my-16 rounded-lg">
+        <div v-if="!hasPlayedGame" class="w-full max-w-xl mx-auto my-16 rounded-lg">
           <div class="flex flex-col space-y-1.5 p-6">
             <h3 class="text-2xl font-semibold leading-none tracking-tight whitespace-nowrap">Pay with card</h3>
           </div>
@@ -933,6 +836,146 @@ class Timer {
             </button>
           </div>
           <p class="pb-6 text-xs italic text-center underline">Reminder: this is a game, not a real checkout form. You will not be billed.</p>
+        </div>
+        <div v-else>
+          <!-- Username input and leaderboard -->
+          <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
+          <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4">
+            <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
+              <span class="text-gray-500">x.com/</span>
+              <!-- :disabled="isUsernameDisabled" -->
+              <input
+                v-model="username"
+                :disabled="isUsernameDisabled"
+                placeholder="Enter your X username"
+                class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none"
+              />
+            </div>
+            <button
+              @click="submitScore"
+              class="flex items-center justify-center px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white border-indigo-600 rounded-lg hover:bg-teal-50"
+            >
+              <svg
+                v-if="isLoadingSubmission"
+                class="w-4 h-4 text-indigo-700 mr-1.5"
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+              >
+                <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+                <path
+                  fill="currentColor"
+                  d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
+                >
+                  <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
+                </path>
+              </svg>
+              {{ isLoadingSubmission ? 'Submitting' : 'Submit' }} Score →
+            </button>
+          </div>
+
+          <!-- LEADERBOARD -->
+          <div v-if="hasPlayedGame && leaderboard?.length" class="flex flex-col items-center justify-center w-full h-screen">
+            <h2 class="font-mono text-3xl text-center">🏆 Leaderboard</h2>
+            <p class="mt-3 font-mono text-base text-center">The ultimate ranking of 10x engineers 😎</p>
+            <div class="flex justify-center mt-16 mb-2">
+              <button
+                @click="currentLeaderboardMode = 'full'"
+                :class="currentLeaderboardMode === 'full' ? 'bg-zinc-800' : 'bg-zinc-500'"
+                class="flex items-center justify-center px-4 py-2 text-white rounded-l-lg hover:bg-zinc-800"
+              >
+                <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
+                    <path
+                      d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
+                    />
+                    <path
+                      d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
+                    />
+                    <path
+                      d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
+                    />
+                  </g>
+                </svg>
+                Full form
+              </button>
+              <button
+                @click="currentLeaderboardMode = 'card'"
+                :class="currentLeaderboardMode === 'card' ? 'bg-zinc-800' : 'bg-zinc-500'"
+                class="flex items-center justify-center px-4 py-2 text-white rounded-r-lg hover:bg-zinc-800"
+              >
+                <svg class="mr-2.5 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
+                  <g fill="currentColor">
+                    <path
+                      d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                    />
+                    <path
+                      d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
+                    />
+                  </g>
+                </svg>
+                Card only
+              </button>
+            </div>
+            <table class="w-8/12 mx-auto mt-6 bg-white rounded-lg shadow-lg text-zinc-800">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2 border-b">Rank</th>
+                  <th class="px-4 py-2 border-b">Username</th>
+                  <th class="px-4 py-2 border-b">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(entry, index) in filteredLeaderboard" :key="entry.id" class="text-center">
+                  <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ index + 1 }}</td>
+                  <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                    <div class="flex items-center justify-start py-1 ml-16">
+                      <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->
+                      <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                        <path
+                          fill="#888888"
+                          d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
+                        />
+                      </svg>
+                      <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
+                    </div>
+                  </td>
+                  <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                    {{ entry.time.toFixed(3) }}s
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+            <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
+              Here is your shareable link (click to copy):
+              <span
+                class="cursor-pointer hover:underline"
+                :class="hasCopiedShareLink ? 'text-green-200' : ''"
+                @click="copyShareLink('4242.pro/s/' + shareShortCode)"
+                >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
+              >
+            </p>
+            <p v-if="!shareShortCode && showConcludingMessage" class="my-4 text-lg font-bold text-center text-white">OR</p>
+            <div v-if="!shareShortCode && showConcludingMessage" class="flex justify-center mt-4 gap-x-2">
+              <input
+                type="text"
+                v-model="inputScoreName"
+                class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Your name"
+                autocorrect="off"
+                spellcheck="false"
+                data-1p-ignore="true"
+              />
+
+              <button @click="shareGame()" class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white rounded-md">
+                Generate share URL
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </div>
