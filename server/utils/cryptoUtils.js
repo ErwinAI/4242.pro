@@ -1,25 +1,33 @@
-// server/utils/cryptoUtils.js
 import crypto from 'crypto';
 
-// Use a hardcoded 32-byte key for development. Replace with a securely stored key in production.
-const secretKey = Buffer.from('12345678901234567890123456789012', 'utf-8'); // 32-byte key
 const algorithm = 'aes-256-ctr';
 
-export const encrypt = (text) => {
+// Helper function to convert Base64 to URL-safe Base64
+const toUrlSafeBase64 = (base64) => base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+// Helper function to convert URL-safe Base64 to Base64
+const fromUrlSafeBase64 = (base64) => base64.replace(/-/g, '+').replace(/_/g, '/');
+
+export const encrypt = (text, secretShareKey) => {
+    const processedSecretKey = Buffer.from(secretShareKey, 'utf-8');
+
     const iv = crypto.randomBytes(16); // Generate a new IV for each encryption
-    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+    const cipher = crypto.createCipheriv(algorithm, processedSecretKey, iv);
 
     const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
 
-    // Combine iv and content into a single string
-    return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
+    // Combine iv and content into a single URL-safe Base64 string
+    const combined = `${iv.toString('base64')}:${encrypted.toString('base64')}`;
+    return toUrlSafeBase64(Buffer.from(combined).toString('base64'));
 };
 
-export const decrypt = (combined) => {
-    const [iv, content] = combined.split(':');
-    const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(iv, 'hex'));
+export const decrypt = (combined, secretShareKey) => {
+    const processedSecretKey = Buffer.from(secretShareKey, 'utf-8');
+    const decoded = Buffer.from(fromUrlSafeBase64(combined), 'base64').toString();
+    const [iv, content] = decoded.split(':');
+    const decipher = crypto.createDecipheriv(algorithm, processedSecretKey, Buffer.from(iv, 'base64'));
 
-    const decrypted = Buffer.concat([decipher.update(Buffer.from(content, 'hex')), decipher.final()]);
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(content, 'base64')), decipher.final()]);
 
     return decrypted.toString();
 };

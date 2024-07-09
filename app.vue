@@ -20,7 +20,6 @@ useHead({
     { property: 'og:description', content: "Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap." },
     { property: 'og:type', content: "website" },
     { property: 'og:url', content: "https://4242.pro/" },
-    { property: 'og:image', content: "https://4242.pro/og.png" },
     { property: 'og:image:type', content: "image/png" },
     { property: 'og:image:width', content: "1200" },
     { property: 'og:image:height', content: "630" },

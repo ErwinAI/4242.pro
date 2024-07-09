@@ -4,24 +4,12 @@ import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
-//******** OG IMAGE SHIZZLE HERE ****************//
-
-// check if there is a parameter
-
-defineOgImageComponent('NuxtSeo', {
-  title: 'Hello OG Image 👋',
-  description: 'Look what at me in dark mode',
-  theme: '#ff0000',
-  colorMode: 'dark',
-})
-
-//******** OG IMAGE SHIZZLE ENDS HERE ****************//
 
 //******** LEADEROROROBOARDODODO ****************//
 
 // Initialize Profanity filter
 const options = new ProfanityOptions()
-options.wholeWord = false // Set to false to catch partial matches
+options.wholeWord = false // set false to catch partial matches
 const profanity = new Profanity(options)
 
 // Add custom words to the profanity filter
@@ -42,15 +30,13 @@ const leaderboard = ref([])
 const currentLeaderboardMode = ref('full')
 
 const fetchLeaderboard = async () => {
-  console.log('Fetching leaderboard...')
   try {
-    nextTick(async () => {
-      const { data, error } = await useFetch('/api/leaderboard')
+    await nextTick(async () => {
+      const {data, error} = await useFetch('/api/leaderboard')
       if (error.value) {
         console.error('Error fetching leaderboard:', error.value)
         leaderboard.value = [] // Initialize as an empty array on error
       } else {
-        console.log('Leaderboard fetched:', data.value)
         leaderboard.value = data.value || [] // Ensure it's an array
       }
     })
@@ -61,10 +47,7 @@ const fetchLeaderboard = async () => {
 }
 
 const filteredLeaderboard = computed(() => {
-  console.log('Filtering leaderboard:', leaderboard.value)
-  console.log('Current mode:', currentLeaderboardMode.value)
   return leaderboard.value.filter((entry) => {
-    console.log('Entry mode:', entry.mode)
     return entry.mode === currentLeaderboardMode.value
   })
 })
@@ -105,7 +88,7 @@ const submitScore = async () => {
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
     isScoreSubmitted.value = true
-    jsConfetti.addConfetti({
+    await jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
     setTimeout(() => {
@@ -125,6 +108,7 @@ const hasAcceptedTerms = ref(false)
 const hasPlayedGame = ref(false)
 const gameMode = ref('full')
 const shareShortCode = ref('')
+const hasCopiedShareLink = ref(false)
 
 const inputEmail = ref('')
 const inputEmailInvalid = ref('')
@@ -140,6 +124,7 @@ const inputAddressOne = ref('')
 const inputAddressTwo = ref('')
 const inputCity = ref('')
 const inputZipCode = ref('')
+const inputScoreName = ref('')
 
 const cardType = ref('')
 const cardDeclineCode = ref('')
@@ -269,30 +254,33 @@ const shareGame = async () => {
   shareShortCode.value = ''
 
   // Grab score in seconds and a placeholder name
-  const score = timer.value.getTime()
-  const name = 'Erwin'
-  const data = { score, name }
+  const score = timer.value.getTime();
+  const name = inputScoreName.value || 'Anonymous';
+  const mode = gameMode.value;
+  const data = { score, name, mode };
 
   try {
     // Use $fetch to call the encrypt API
-    const { data: response, error } = await useFetch('/api/encrypt', {
+    const response = await $fetch('/api/encrypt', {
       method: 'POST',
       body: { code: JSON.stringify(data) },
     })
 
-    if (error.value) {
-      console.log(error.value)
-      //TODO: someone trying to cheat and just giv random code? hell nah
-    }
-
     // Store the encrypted shortcode
-    shareShortCode.value = response.value.encryptedCode
-    console.log('Encrypted Shortcode:', response.value.encryptedCode)
+    shareShortCode.value = response.encryptedCode;
   } catch (error) {
     console.error('Error encrypting game data:', error)
     shareShortCode.value = null
   }
 }
+
+const copyShareLink = async (link) => {
+  hasCopiedShareLink.value = true;
+  await navigator.clipboard.writeText(link);
+  setTimeout(() => {
+    hasCopiedShareLink.value = false;
+  }, 2000);
+};
 
 const restartGame = () => {
   hasPlayedGame.value = false
@@ -320,9 +308,12 @@ const restartGame = () => {
   inputAddressTwo.value = ''
   inputCity.value = ''
   inputZipCode.value = ''
+
   isUsernameSubmitted.value = false
   isScoreSubmitted.value = false
   localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
+
+  shareShortCode.value = ''
 }
 
 const disableInputs = computed(() => {
@@ -420,7 +411,7 @@ const validateResults = () => {
       concludingMessage.value =
         "Absolute fire but maybe try again cause there's more fun messages lol pls try harder and read those, took me so long to come up with them =')"
     } else if ((isGameModeFull.value && timer.value.getTime() < 13) || (isGameModeCard.value && timer.value.getTime() < 5)) {
-      concludingMessage.value = "HMMMMMRRR! Ur blazin' there wow but can you like, try harder?! I want you to see the messages for <8sec"
+      concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the other messages lol';
     } else if ((isGameModeFull.value && timer.value.getTime() < 16) || (isGameModeCard.value && timer.value.getTime() < 6)) {
       concludingMessage.value = "Sick score but don't share this because your friends might unfollow you, you can do better!"
     } else if ((isGameModeFull.value && timer.value.getTime() < 19) || (isGameModeCard.value && timer.value.getTime() < 7)) {
@@ -567,19 +558,12 @@ class Timer {
               </div>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 text-4xl text-center lg:mt-32">{{ timer ? timer.getTime().toFixed(5) : '' }} seconds</p>
-                <button v-if="!shareShortCode" @click="shareGame()" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
-                  Share! (experiment)
-                </button>
-                <p v-if="shareShortCode" class="mt-2 text-sm italic text-center break-all">
-                  Here is your shareable link:
-                  <a :href="'https://4242.pro/s/' + shareShortCode" target="_blank" class="underline">https://4242.pro/s/{{ shareShortCode }}</a>
-                </p>
+                <p class="mt-8 lg:mt-16 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
               </template>
 
               <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
 
-              <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
+              <p class="my-4 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
               <!-- Username input and leaderboard -->
               <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
@@ -667,6 +651,17 @@ class Timer {
                   </tbody>
                 </table>
               </div>
+
+              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">Here is your shareable link (click to copy): <span class="hover:underline cursor-pointer" :class="hasCopiedShareLink ? 'text-green-200' : ''" @click="copyShareLink('4242.pro/s/' + shareShortCode)">4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span></p>
+                <p v-if="!shareShortCode && showConcludingMessage" class="text-white text-lg my-4 text-center font-bold">OR</p>
+                <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
+                  <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                         placeholder="Your name" autocorrect="off" spellcheck="false" data-1p-ignore="true">
+
+                  <button @click="shareGame()" class="flex h-8 bg-white text-xs items-center text-indigo-600 rounded-md px-2 py-1">Generate share URL</button>
+                </div>
+              </template>
 
               <button @click="restartGame()" v-if="hasPlayedGame" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
                 Play again
