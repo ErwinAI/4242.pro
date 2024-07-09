@@ -507,9 +507,9 @@ class Timer {
       <div class="lg:w-[40%] flex bg-indigo-600 font-mono text-white p-4">
         <div class="flex flex-col justify-between grow">
           <div class="w-full grow">
-            <h1 class="mt-8 text-2xl text-center lg:mt-16">4242.pro</h1>
+            <h1 class="mt-8 text-3xl text-center lg:mt-16">4242.pro</h1>
 
-            <p class="mx-4 my-2 text-center">👀 Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap.</p>
+            <p class="mx-4 my-3 text-center">👀 Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap.</p>
 
             <!-- BEFORE GAME / ACCEPTING TERMS -->
             <template v-if="!hasAcceptedTerms">
@@ -524,21 +524,44 @@ class Timer {
 
             <!-- CURRENT STATE OR OUTCOME OF GAME -->
             <template v-else>
-              <div class="grid max-w-sm grid-cols-3 mx-auto mt-4 lg:mt-8 gap-x-2">
-                <div class="flex items-center font-bold text-white">Game modes</div>
+              <div class="flex items-center justify-center mx-auto mt-8 mb-5 font-bold text-center text-white">↓ Pick your game mode ↓</div>
+              <div class="grid max-w-sm grid-cols-2 mx-auto gap-x-2">
                 <div
-                  class="px-4 py-2 border-white cursor-pointer"
+                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
                   @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
                   :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                 >
+                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
+                      <path
+                        d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
+                      />
+                      <path
+                        d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
+                      />
+                      <path
+                        d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
+                      />
+                    </g>
+                  </svg>
                   Full form
                 </div>
 
                 <div
-                  class="px-4 py-2 border-white cursor-pointer"
+                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
                   @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
                   :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                 >
+                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
+                    <g fill="currentColor">
+                      <path
+                        d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                      />
+                      <path
+                        d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
+                      />
+                    </g>
+                  </svg>
                   Card only
                 </div>
               </div>

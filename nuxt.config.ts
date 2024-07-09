@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: 'http://localhost:4000/',
+    url: 'http://localhost:3000/',
   },
 
   compatibilityDate: '2024-07-06',
