@@ -1,4 +1,5 @@
 <script setup>
+import { Profanity, ProfanityOptions } from '@2toad/profanity'
 import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 
@@ -17,12 +18,20 @@ defineOgImageComponent('NuxtSeo', {
 
 //******** LEADEROROROBOARDODODO ****************//
 
+// Initialize Profanity filter
+const options = new ProfanityOptions()
+options.wholeWord = false // Set to false to catch partial matches
+const profanity = new Profanity(options)
+
+// Add custom words to the profanity filter
+profanity.addWords(['hitler'])
+
 const isBrowser = typeof window !== 'undefined'
 const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
 const leaderboard = ref([
-  { id: 1, username: '@sobedominik', time: 5.23, mode: 'full' },
-  { id: 2, username: '@erwinai', time: 6.45, mode: 'card' },
-  { id: 3, username: '@yomamamfast', time: 7.89, mode: 'full' },
+  { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
+  { id: 2, username: 'erwinai', time: 6.45, mode: 'card' },
+  { id: 3, username: 'yomamamfast', time: 7.89, mode: 'full' },
 ])
 
 const currentLeaderboardMode = ref('full')
@@ -163,6 +172,17 @@ onMounted(() => {
     },
     { deep: true }
   )
+  // Watch for changes in the username input
+  watch(username, (newValue) => {
+    // Remove spaces
+    username.value = newValue.replace(/\s/g, '')
+
+    // Check for profanity
+    if (profanity.exists(username.value)) {
+      alert('Please avoid using inappropriate words in your username.')
+      username.value = ''
+    }
+  })
 })
 
 const startGame = () => {
@@ -467,9 +487,12 @@ class Timer {
               <p class="my-8 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
 
               <!-- Username input and leaderboard -->
-              <div v-if="hasPlayedGame && inputDeclaredValid" class="mt-4">
-                <input v-model="username" placeholder="Enter your username" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg" />
-                <button @click="submitScore" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">Submit Score</button>
+              <div v-if="hasPlayedGame && inputDeclaredValid" class="max-w-sm mx-auto mt-4">
+                <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
+                  <span class="text-gray-500">x.com/</span>
+                  <input v-model="username" placeholder="Enter your X username" class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none" />
+                </div>
+                <button @click="submitScore" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">Submit Score →</button>
               </div>
 
               <div v-if="leaderboard.length" class="mt-4">
@@ -503,12 +526,14 @@ class Timer {
                       <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ index + 1 }}</td>
                       <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
                         <div class="flex items-center justify-start py-1 ml-8">
-                          <img
-                            src="https://pbs.twimg.com/profile_images/1416442301186990084/0MkwWfmd_400x400.jpg"
-                            alt="Avatar"
-                            class="mr-2 rounded-full w-7 h-7"
-                          />
-                          {{ entry.username }}
+                          <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->
+                          <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                            <path
+                              fill="#888888"
+                              d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
+                            />
+                          </svg>
+                          <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
                         </div>
                       </td>
                       <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ entry.time }}</td>
