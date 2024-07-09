@@ -25,7 +25,7 @@ options.wholeWord = false // Set to false to catch partial matches
 const profanity = new Profanity(options)
 
 // Add custom words to the profanity filter
-profanity.addWords(['hitler'])
+profanity.addWords(['paddle'])
 
 const isBrowser = typeof window !== 'undefined'
 const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
