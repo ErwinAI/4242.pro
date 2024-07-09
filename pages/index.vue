@@ -9,6 +9,7 @@ const hasAcceptedTerms = ref(false);
 const hasPlayedGame = ref(false);
 const gameMode = ref('full');
 const shareShortCode = ref('');
+const hasCopiedShareLink = ref(false);
 
 const inputEmail = ref('');
 const inputEmailInvalid = ref('');
@@ -146,6 +147,14 @@ const shareGame = async () => {
     console.error('Error encrypting game data:', error);
     shareShortCode.value = null;
   }
+};
+
+const copyShareLink = async (link) => {
+  hasCopiedShareLink.value = true;
+  await navigator.clipboard.writeText(link);
+  setTimeout(() => {
+    hasCopiedShareLink.value = false;
+  }, 2000);
 };
 
 const restartGame = () => {
@@ -370,8 +379,6 @@ class Timer {
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
                 <p class="mt-8 lg:mt-16 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
-
-                <p v-if="shareShortCode" class="mt-2 text-sm italic text-center break-all">Here is your shareable link: <a :href="'https://4242.pro/s/' + shareShortCode" target="_blank" class="underline">https://4242.pro/s/{{ shareShortCode }}</a></p>
               </template>
 
               <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
@@ -381,6 +388,7 @@ class Timer {
               <button @click="restartGame()" v-if="hasPlayedGame" class="mt-20 flex mx-auto bg-white text-indigo-600 rounded-lg px-4 py-2">Play again</button>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">Here is your shareable link (click to copy): <span class="hover:underline cursor-pointer" :class="hasCopiedShareLink ? 'text-green-200' : ''" @click="copyShareLink('https://www.4242.pro/s/' + shareShortCode)">https://www.4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span></p>
                 <p v-if="!shareShortCode && showConcludingMessage" class="text-white text-lg my-4 text-center font-bold">OR</p>
                 <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
                   <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
