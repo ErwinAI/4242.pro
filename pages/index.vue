@@ -4,7 +4,6 @@ import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
-
 //******** LEADEROROROBOARDODODO ****************//
 
 // Initialize Profanity filter
@@ -32,7 +31,7 @@ const currentLeaderboardMode = ref('full')
 const fetchLeaderboard = async () => {
   try {
     await nextTick(async () => {
-      const {data, error} = await useFetch('/api/leaderboard')
+      const { data, error } = await useFetch('/api/leaderboard')
       if (error.value) {
         console.error('Error fetching leaderboard:', error.value)
         leaderboard.value = [] // Initialize as an empty array on error
@@ -254,10 +253,10 @@ const shareGame = async () => {
   shareShortCode.value = ''
 
   // Grab score in seconds and a placeholder name
-  const score = timer.value.getTime();
-  const name = inputScoreName.value || 'Anonymous';
-  const mode = gameMode.value;
-  const data = { score, name, mode };
+  const score = timer.value.getTime()
+  const name = inputScoreName.value || 'Anonymous'
+  const mode = gameMode.value
+  const data = { score, name, mode }
 
   try {
     // Use $fetch to call the encrypt API
@@ -267,7 +266,7 @@ const shareGame = async () => {
     })
 
     // Store the encrypted shortcode
-    shareShortCode.value = response.encryptedCode;
+    shareShortCode.value = response.encryptedCode
   } catch (error) {
     console.error('Error encrypting game data:', error)
     shareShortCode.value = null
@@ -275,12 +274,12 @@ const shareGame = async () => {
 }
 
 const copyShareLink = async (link) => {
-  hasCopiedShareLink.value = true;
-  await navigator.clipboard.writeText(link);
+  hasCopiedShareLink.value = true
+  await navigator.clipboard.writeText(link)
   setTimeout(() => {
-    hasCopiedShareLink.value = false;
-  }, 2000);
-};
+    hasCopiedShareLink.value = false
+  }, 2000)
+}
 
 const restartGame = () => {
   hasPlayedGame.value = false
@@ -411,7 +410,7 @@ const validateResults = () => {
       concludingMessage.value =
         "Absolute fire but maybe try again cause there's more fun messages lol pls try harder and read those, took me so long to come up with them =')"
     } else if ((isGameModeFull.value && timer.value.getTime() < 13) || (isGameModeCard.value && timer.value.getTime() < 5)) {
-      concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the other messages lol';
+      concludingMessage.value = "HMMMMMRRR! Ur blazin' there wow but can you like, try harder?! I want you to see the other messages lol"
     } else if ((isGameModeFull.value && timer.value.getTime() < 16) || (isGameModeCard.value && timer.value.getTime() < 6)) {
       concludingMessage.value = "Sick score but don't share this because your friends might unfollow you, you can do better!"
     } else if ((isGameModeFull.value && timer.value.getTime() < 19) || (isGameModeCard.value && timer.value.getTime() < 7)) {
@@ -498,19 +497,29 @@ class Timer {
       <div class="lg:w-[40%] flex bg-indigo-600 font-mono text-white p-4">
         <div class="flex flex-col justify-between grow">
           <div class="w-full grow">
-            <h1 class="mt-8 text-3xl text-center lg:mt-16">4242.pro</h1>
-
-            <p class="mx-4 my-3 text-center">👀 Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap.</p>
+            <h1 class="mt-8 font-mono text-4xl text-center lg:mt-16">4242.pro</h1>
+            <p class="mx-4 my-3 text-lg text-center text-indigo-100">Let's see if ur a real 10x engineer or a n00b 👀</p>
+            <div class="w-full h-[2px] mt-6 bg-indigo-500"></div>
+            <div class="w-9/12 mx-auto mt-16 text-left">
+              <p class="mb-2 text-lg font-bold">🎯 Your Goal</p>
+              <p>Fill out the right checkout form <span class="font-bold">asap</span> 👉</p>
+            </div>
 
             <!-- BEFORE GAME / ACCEPTING TERMS -->
             <template v-if="!hasAcceptedTerms">
-              <p class="mx-4 mt-16 mb-2 italic text-center">
-                First, please click the button below to confirm you understand this is a GAME and not REAL. If you enter your real CC details, perhaps
-                I will charge you! Don't gamble, be warned. Okay now that you have read this, click the button below and show me ur sk1lz.
-              </p>
-              <button @click="hasAcceptedTerms = true" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
-                Yes, I understand the above m8 dw
-              </button>
+              <div class="mt-28">
+                <button
+                  @click="hasAcceptedTerms = true"
+                  class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg scale-[1.15] hover:scale-[1.16] transition-transform hover:bg-teal-50"
+                >
+                  Let's start the game m8 →
+                </button>
+                <p class="w-11/12 mx-auto mt-8 mb-2 text-xs italic text-center text-indigo-400">
+                  By clicking the start button you confirm that you understand this is a <strong>GAME</strong> and <strong>NOT REAL</strong>. Again
+                  it's <strong>NOT REAL</strong>. If you enter your real CC details, perhaps we will charge you! Don't gamble, be warned. Okay now
+                  that you have read this, click the button above and show us ur sk1lz.
+                </p>
+              </div>
             </template>
 
             <!-- CURRENT STATE OR OUTCOME OF GAME -->
@@ -558,7 +567,7 @@ class Timer {
               </div>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 lg:mt-16 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+                <p class="mt-8 text-4xl text-center lg:mt-16">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
               </template>
 
               <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
@@ -653,13 +662,30 @@ class Timer {
               </div>
 
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">Here is your shareable link (click to copy): <span class="hover:underline cursor-pointer" :class="hasCopiedShareLink ? 'text-green-200' : ''" @click="copyShareLink('4242.pro/s/' + shareShortCode)">4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span></p>
-                <p v-if="!shareShortCode && showConcludingMessage" class="text-white text-lg my-4 text-center font-bold">OR</p>
-                <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
-                  <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                         placeholder="Your name" autocorrect="off" spellcheck="false" data-1p-ignore="true">
+                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
+                  Here is your shareable link (click to copy):
+                  <span
+                    class="cursor-pointer hover:underline"
+                    :class="hasCopiedShareLink ? 'text-green-200' : ''"
+                    @click="copyShareLink('4242.pro/s/' + shareShortCode)"
+                    >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
+                  >
+                </p>
+                <p v-if="!shareShortCode && showConcludingMessage" class="my-4 text-lg font-bold text-center text-white">OR</p>
+                <div v-if="!shareShortCode && showConcludingMessage" class="flex justify-center mt-4 gap-x-2">
+                  <input
+                    type="text"
+                    v-model="inputScoreName"
+                    class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Your name"
+                    autocorrect="off"
+                    spellcheck="false"
+                    data-1p-ignore="true"
+                  />
 
-                  <button @click="shareGame()" class="flex h-8 bg-white text-xs items-center text-indigo-600 rounded-md px-2 py-1">Generate share URL</button>
+                  <button @click="shareGame()" class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white rounded-md">
+                    Generate share URL
+                  </button>
                 </div>
               </template>
 
@@ -669,7 +695,8 @@ class Timer {
             </template>
           </div>
 
-          <div class="mt-32 text-sm text-center lg:mt-0">
+          <div class="w-full h-[2px] mb-4 bg-indigo-500"></div>
+          <div class="py-4 text-sm text-center bg-indigo-800 rounded-md">
             <p>
               Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a>. I got
               inspired after having to enter these details four hundred trillion times. May the 4 be with you 2!
