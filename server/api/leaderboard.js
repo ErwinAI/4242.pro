@@ -29,12 +29,12 @@ export default defineEventHandler(async (event) => {
 
         // check if time is faster or not
         if (existingDocuments.documents[0].time < time) {
-          return { warning: 'Time is not faster than existing time' }
+          return { warning: 'Time is not faster than existing time', ...existingDocuments.documents[0]  }
         }
 
         // check if score is zero or close to it and disqualify
         if (time < 0.2) {
-          return { warning: 'NEIN' }
+          return { warning: 'NEIN', ...existingDocuments.documents[0] }
         }
 
         // Update the existing document

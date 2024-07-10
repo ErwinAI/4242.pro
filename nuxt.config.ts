@@ -11,6 +11,12 @@ export default defineNuxtConfig({
     },
   },
 
+  routeRules: {
+    '/api/code': {
+      csurf: false
+    }
+  },
+
   runtimeConfig: {
     secretShareKey: '',
   },

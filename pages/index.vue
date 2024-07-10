@@ -54,6 +54,12 @@ const leaderboard = ref([])
 const userRank = ref(null)
 const isLoadingLeaderboard = ref(false)
 const hasImprovedScoreMessage = ref('')
+const lastScore = ref('')
+
+// computed share url
+const shareUrl = computed(() => {
+  return `https://4242.pro/c/${lastScore.value.$id}`
+})
 
 const currentLeaderboardMode = ref('full')
 
@@ -135,6 +141,8 @@ const submitScore = async () => {
       body: newEntry,
     })
 
+    lastScore.value = callResult
+
     if (callResult.warning) {
       hasImprovedScoreMessage.value = 'One of your previous scores was better lol sry'
     } else {
@@ -179,7 +187,6 @@ const showConcludingMessage = ref(false)
 const hasAcceptedTerms = ref(false)
 const hasPlayedGame = ref(false)
 const gameMode = ref('full')
-const shareShortCode = ref('')
 const hasCopiedShareLink = ref(false)
 const openedDevTools = ref(false)
 
@@ -321,35 +328,20 @@ const stopGame = () => {
   }
 }
 
-const shareGame = async () => {
-  shareShortCode.value = ''
-
-  // Grab score in seconds and a placeholder name
-  const score = timer.value.getTime()
-  const name = username.value || 'Anonymous'
-  const mode = gameMode.value
-  const data = { score, name, mode }
-
-  try {
-    const response = await $csrfFetch('/api/encrypt', {
-      method: 'POST',
-      body: { code: JSON.stringify(data) },
-    })
-
-    // Store the encrypted shortcode
-    shareShortCode.value = response.encryptedCode
-  } catch (error) {
-    console.error('Error encrypting game data:', error)
-    shareShortCode.value = null
-  }
-}
-
-const copyShareLink = async (link) => {
+const copyShareLink = async () => {
+  // put url in clipboard
   hasCopiedShareLink.value = true
-  await navigator.clipboard.writeText(link)
+  await navigator.clipboard.writeText(shareUrl.value)
   setTimeout(() => {
     hasCopiedShareLink.value = false
   }, 2000)
+}
+
+const generateTwitterShareLink = () => {
+  const time = lastScore.value ? lastScore.value.time.toFixed(4) : null
+
+  // generate twitter share link
+  return `https://twitter.com/intent/tweet?text=Just did the 4242.pro challenge${time ? ' in ' + time + ' seconds' : ''}! R u better dev? Beat my score ;)?&url=${shareUrl.value}&hashtags=4242pro`
 }
 
 const restartGame = () => {
@@ -383,7 +375,6 @@ const restartGame = () => {
   isScoreSubmitted.value = false
   localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
 
-  shareShortCode.value = ''
   userRank.value = null
   leaderboard.value = []
 
@@ -492,7 +483,7 @@ const validateResults = () => {
     } else if ((isGameModeFull.value && timer.value.getTime() < 22) || (isGameModeCard.value && timer.value.getTime() < 8)) {
       concludingMessage.value = 'Eh oke nice I guess haha but try harder okay?'
     } else if ((isGameModeFull.value && timer.value.getTime() < 25) || (isGameModeCard.value && timer.value.getTime() < 10)) {
-      concludingMessage.value = "This is average what were you doing? Can't afford typo's okay try again."
+      concludingMessage.value = "This is average what were you doing? Can't afford typos okay try again."
     } else if ((isGameModeFull.value && timer.value.getTime() < 28) || (isGameModeCard.value && timer.value.getTime() < 11)) {
       concludingMessage.value = 'LOL did you forget to turn on your keyboard or smth?'
     } else if ((isGameModeFull.value && timer.value.getTime() < 31) || (isGameModeCard.value && timer.value.getTime() < 12)) {
@@ -969,7 +960,7 @@ class Timer {
                 <!-- User rank display -->
                 <div v-if="userRank !== null" class="mt-6 text-center">
                   <p>
-                    Your are currently ranking: <span class="text-indigo-600 text-semibold">{{ userRank }}</span>
+                    You are currently ranking: <span class="text-indigo-600 text-semibold">{{ userRank }}</span>
                   </p>
                   <p v-if="userRank === 1">🎉 Congratulations! You are the top scorer! 🥇</p>
                   <p v-if="userRank === 2">🎉 Great job! You are the second top scorer! 🥈</p>
@@ -1025,25 +1016,28 @@ class Timer {
                 </div>
 
                 <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                  <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
-                    Here is your shareable link (click to copy):
-                    <span
-                      class="cursor-pointer hover:underline"
-                      :class="hasCopiedShareLink ? 'text-green-200' : ''"
-                      @click="copyShareLink('4242.pro/s/' + shareShortCode)"
-                      >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
-                    >
-                  </p>
 
-                  <div v-if="!shareShortCode && showConcludingMessage" class="flex flex-col items-center justify-center mt-4 gap-x-2">
+                  <div v-if="showConcludingMessage" class="flex flex-col items-center justify-center mt-4 gap-x-2">
                     <h3 class="mt-6 mb-1 font-mono text-xl font-medium">🌐 Share your score</h3>
                     <p class="mb-5 font-mono text-xs opacity-60">If you are brave enough</p>
-                    <button
-                      @click="shareGame()"
-                      class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white border-2 border-indigo-700 rounded-md"
-                    >
-                      Generate share URL →
-                    </button>
+                    <div class="flex gap-x-2">
+                      <button
+                        @click="copyShareLink()"
+                        class="flex items-center h-8 px-4 py-2 text-xs bg-indigo-600 text-white rounded-full"
+                      >
+                        {{ hasCopiedShareLink ? 'Share URL copied ✅' : 'Copy share URL' }}
+                      </button>
+                      <a class="bg-black flex items-center h-8 px-4 py-2 text-xs text-white rounded-full"
+                         :href="generateTwitterShareLink()" target="_blank">
+                        <svg class="mr-2 size-4 inline text-white" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                          <path
+                              fill="#888888"
+                              d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
+                          />
+                        </svg>
+                        Post my score
+                      </a>
+                    </div>
                   </div>
                 </template>
               </div>

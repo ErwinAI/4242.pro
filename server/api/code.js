@@ -1,4 +1,4 @@
-import { Client, Databases, ID, Query } from 'node-appwrite'
+import { Client, Databases } from 'node-appwrite'
 
 const client = new Client()
 client
@@ -14,15 +14,15 @@ const collectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID
 export default defineEventHandler(async (event) => {
     const method = event.node.req.method
 
-    if (method === 'GET') {
-        const { code } = getQuery(event)
+    if (method === 'POST') {
+        const { code } = await readBody(event);
 
         try {
             const response = await databases.getDocument(databaseId, collectionId, code)
-            const rank = response ? response.rank : null // Adjust according to your document structure
-            return { rank }
+            const { time, username, mode } = response
+            return { time, username, mode }
         } catch (error) {
-            console.error('Error fetching rank:', error)
+            console.error('Error fetching:', error)
             return { error: error.message }
         }
     } else {
