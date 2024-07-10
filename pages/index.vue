@@ -3,6 +3,8 @@ import { Profanity, ProfanityOptions } from '@2toad/profanity'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
+const { $csrfFetch } = useNuxtApp()
+
 useHead({
   meta: [
     { property: 'og:image', content: '/metaog.png' },
@@ -72,22 +74,19 @@ watch(currentLeaderboardMode, async (newValue) => {
 const fetchLeaderboardAndRank = async (username, mode) => {
   try {
     isLoadingLeaderboard.value = true
-    const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
-    if (leaderboardError.value) {
-      console.error('Error fetching leaderboard:', leaderboardError.value)
+
+    try {
+      const callResult = await useCsrfFetch('/api/leaderboard')
+      leaderboard.value = callResult.data.value;
+    } catch (e) {
+      console.error('Error fetching leaderboard:', e)
       leaderboard.value = []
       throw new Error('Error fetching leaderboard')
-    } else {
-      leaderboard.value = leaderboardData.value || []
     }
 
-    const { data: rankData, error: rankError } = await useFetch(`/api/rank?username=${username}&mode=${mode}`)
-    if (rankError.value) {
-      console.error('Error fetching user rank:', rankError.value)
-      userRank.value = null
-      throw new Error('Error fetching user rank')
-    } else {
-      userRank.value = rankData.value.rank
+    try {
+      const rankData = await useCsrfFetch(`/api/rank?username=${username}&mode=${mode}`)
+      userRank.value = rankData.data.value.rank
       if (userRank.value <= 3) {
         const jsConfetti = new JSConfetti()
         setTimeout(() => {
@@ -99,6 +98,10 @@ const fetchLeaderboardAndRank = async (username, mode) => {
           })
         }, 2000)
       }
+    } catch (e) {
+      console.error('Error fetching user rank:', e)
+      userRank.value = null
+      throw new Error('Error fetching user rank')
     }
   } catch (err) {
     console.error('Unexpected error fetching leaderboard and rank:', err)
@@ -126,32 +129,33 @@ const submitScore = async () => {
     mode: gameMode.value,
   }
 
-  const { data, error } = await useFetch('/api/leaderboard', {
-    method: 'POST',
-    body: newEntry,
-  })
+  try {
+    const callResult = await $csrfFetch('/api/leaderboard', {
+      method: 'POST',
+      body: newEntry,
+    })
 
-  if (!error.value) {
-    if (data.value.warning) {
+    if (callResult.warning) {
       hasImprovedScoreMessage.value = 'One of your previous scores was better lol sry'
-    }
-
-    // Check if the username already exists in the leaderboard for the current game mode
-    const existingEntryIndex = leaderboard.value.findIndex((entry) => entry.username === username.value && entry.mode === gameMode.value)
-
-    if (existingEntryIndex !== -1) {
-      // Update the existing entry
-      leaderboard.value[existingEntryIndex] = data.value
     } else {
-      // Add a new entry
-      leaderboard.value.push(data.value)
+
+      // Check if the username already exists in the leaderboard for the current game mode
+      const existingEntryIndex = leaderboard.value.findIndex((entry) => entry.username === username.value && entry.mode === gameMode.value)
+
+      if (existingEntryIndex !== -1) {
+        // Update the existing entry
+        leaderboard.value[existingEntryIndex] = callResult.data.value
+      } else {
+        // Add a new entry
+        leaderboard.value.push(callResult.data.value)
+      }
+
+      leaderboard.value.sort((a, b) => a.time - b.time)
+
+      localStorage.setItem('username', username.value) // Store username in localStorage
+      isUsernameSubmitted.value = true // Set to true after successful submission
+      localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
     }
-
-    leaderboard.value.sort((a, b) => a.time - b.time)
-
-    localStorage.setItem('username', username.value) // Store username in localStorage
-    isUsernameSubmitted.value = true // Set to true after successful submission
-    localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
 
     await jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
@@ -162,8 +166,8 @@ const submitScore = async () => {
       })
     }, 500)
     await fetchLeaderboardAndRank(username.value, gameMode.value)
-  } else {
-    console.error('Error submitting score:', error.value)
+  } catch (e) {
+    console.error('Error submitting score:', e)
     isLoadingSubmission.value = false
     alert('Error submitting your score, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
   }
@@ -327,8 +331,7 @@ const shareGame = async () => {
   const data = { score, name, mode }
 
   try {
-    // Use $fetch to call the encrypt API
-    const response = await $fetch('/api/encrypt', {
+    const response = await $csrfFetch('/api/encrypt', {
       method: 'POST',
       body: { code: JSON.stringify(data) },
     })

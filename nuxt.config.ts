@@ -20,5 +20,5 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-06',
-  modules: ['nuxt-og-image'],
+  modules: ['nuxt-og-image', "nuxt-csurf"],
 })
