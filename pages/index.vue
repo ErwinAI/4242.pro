@@ -1044,4 +1044,7 @@ class Timer {
   </div>
 </template>
 
-<style scoped></style>
+<style>
+div[data-lastpass-icon-root] { display: none; }
+div[data-lastpass-root] { display: none; }
+</style>
