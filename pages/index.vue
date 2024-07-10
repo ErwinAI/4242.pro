@@ -257,6 +257,12 @@ onMounted(async () => {
   } else {
     console.warn('devtoolsDetector is not available.');
   }
+
+  // to prevent pasting
+  const disableCopyCutPaste = (event) => {
+    event.preventDefault();
+  };
+  document.body.addEventListener('paste', disableCopyCutPaste);
 })
 
 const startGame = () => {
