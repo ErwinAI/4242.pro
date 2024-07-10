@@ -26,6 +26,12 @@ export default defineEventHandler(async (event) => {
       ])
 
       if (existingDocuments.total > 0) {
+
+        // check if time is faster or not
+        if (existingDocuments.documents[0].time < time) {
+          return { warning: 'Time is not faster than existing time' }
+        }
+
         // Update the existing document
         const documentId = existingDocuments.documents[0].$id
         const response = await databases.updateDocument(databaseId, collectionId, documentId, { time })

@@ -41,6 +41,7 @@ const isUsernameDisabled = computed(() => isUsernameSubmitted.value) // Update c
 const leaderboard = ref([])
 const userRank = ref(null)
 const isLoadingLeaderboard = ref(false)
+const hasImprovedScoreMessage = ref('')
 
 const currentLeaderboardMode = ref('full')
 
@@ -122,6 +123,10 @@ const submitScore = async () => {
   })
 
   if (!error.value) {
+    if(data.value.warning) {
+      hasImprovedScoreMessage.value = 'One of your previous scores was better lol sry'
+    }
+
     // Check if the username already exists in the leaderboard for the current game mode
     const existingEntryIndex = leaderboard.value.findIndex((entry) => entry.username === username.value && entry.mode === gameMode.value)
 
@@ -369,6 +374,8 @@ const restartGame = () => {
   shareShortCode.value = ''
   userRank.value = null
   leaderboard.value = []
+
+  hasImprovedScoreMessage.value = ''
 }
 
 const disableInputs = computed(() => {
@@ -598,6 +605,7 @@ class Timer {
                     <span class="text-4xl" :class="hasPlayedGame ? 'font-bold' : ''"> {{ timer ? timer.getTime().toFixed(4) : '' }}</span
                     ><span class="text-2xl"> seconds</span>
                   </p>
+                  <p class="mt-4 text-base text-center" v-if="hasImprovedScoreMessage && hasImprovedScoreMessage !== ''">{{ hasImprovedScoreMessage }}</p>
                 </template>
                 <p class="flex items-center justify-center mt-2 text-sm italic text-center text-indigo-300" v-if="!timer.hasBeenActivated()">
                   <SvgCircleNotification />
