@@ -565,6 +565,7 @@ class Timer {
 
 <template>
   <div class="h-full min-h-screen h-100% relative">
+    <!-- <div class="absolute z-50 w-full h-screen bg-indigo-400"></div> -->
     <div v-if="username" class="absolute top-3 left-3 border-2 border-white/50 rounded-full px-1.5 py-0.5 text-xs text-white font-mono">
       @{{ username }}
     </div>
