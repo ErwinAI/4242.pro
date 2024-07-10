@@ -3,6 +3,29 @@ import { Profanity, ProfanityOptions } from '@2toad/profanity'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
+// check if browser
+if (process.client) {
+  console.log(`
+
+██╗  ██╗██████╗ ██╗  ██╗██████╗
+██║  ██║╚════██╗██║  ██║╚════██╗
+███████║ █████╔╝███████║ █████╔╝
+╚════██║██╔═══╝ ╚════██║██╔═══╝
+     ██║███████╗     ██║███████╗
+     ╚═╝╚══════╝     ╚═╝╚══════╝
+
+██████╗ ██████╗  ██████╗
+██╔══██╗██╔══██╗██╔═══██╗
+██████╔╝██████╔╝██║   ██║
+██╔═══╝ ██╔══██╗██║   ██║
+██║     ██║  ██║╚██████╔╝
+╚═╝     ╚═╝  ╚═╝ ╚═════╝
+
+Welcome. You must be opening this to check how 4242.pro works or you're trying to cheat our game.
+We say: nah m8. Good try. Goodbye. 👋
+  `)
+}
+
 // Initialize Profanity filter
 const options = new ProfanityOptions()
 options.wholeWord = false // set false to catch partial matches
@@ -247,20 +270,22 @@ onMounted(async () => {
     }
   })
 
-  if (typeof devtoolsDetector !== 'undefined') {
-    devtoolsDetector.config.onDetectOpen = () => {
-      openedDevTools.value = true
-    };
-    devtoolsDetector.config.onDetectClose = () => {
-      openedDevTools.value = false
-    };
-  }
+  if (process.client) {
+    if (typeof devtoolsDetector !== 'undefined') {
+      devtoolsDetector.config.onDetectOpen = () => {
+        openedDevTools.value = true
+      };
+      devtoolsDetector.config.onDetectClose = () => {
+        openedDevTools.value = false
+      };
+    }
 
-  // to prevent pasting
-  const disableCopyCutPaste = (event) => {
-    event.preventDefault();
-  };
-  document.body.addEventListener('paste', disableCopyCutPaste);
+    // to prevent pasting
+    const disableCopyCutPaste = (event) => {
+      event.preventDefault();
+    };
+    document.body.addEventListener('paste', disableCopyCutPaste);
+  }
 })
 
 const startGame = () => {
