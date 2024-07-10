@@ -4,7 +4,6 @@ import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
-
 //******** LEADEROROROBOARDODODO ****************//
 
 // Initialize Profanity filter
@@ -20,6 +19,8 @@ const username = ref(isBrowser ? localStorage.getItem('username') || '' : '')
 const isUsernameSubmitted = ref(isBrowser ? JSON.parse(localStorage.getItem('isUsernameSubmitted')) || false : false) // Load from localStorage
 const isUsernameDisabled = computed(() => isUsernameSubmitted.value) // Update computed property
 const leaderboard = ref([])
+const userRank = ref(null)
+const isLoadingLeaderboard = ref(false)
 
 // const leaderboard = ref([
 //   { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
@@ -32,7 +33,7 @@ const currentLeaderboardMode = ref('full')
 const fetchLeaderboard = async () => {
   try {
     await nextTick(async () => {
-      const {data, error} = await useFetch('/api/leaderboard')
+      const { data, error } = await useFetch('/api/leaderboard')
       if (error.value) {
         console.error('Error fetching leaderboard:', error.value)
         leaderboard.value = [] // Initialize as an empty array on error
@@ -52,12 +53,77 @@ const filteredLeaderboard = computed(() => {
   })
 })
 
+const fetchLeaderboardAndRank = async (username, mode) => {
+  try {
+    isLoadingLeaderboard.value = true
+    const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
+    if (leaderboardError.value) {
+      console.error('Error fetching leaderboard:', leaderboardError.value)
+      leaderboard.value = []
+      throw new Error('Error fetching leaderboard')
+    } else {
+      leaderboard.value = leaderboardData.value || []
+    }
+
+    const { data: rankData, error: rankError } = await useFetch(`/api/rank?username=${username}&mode=${mode}`)
+    if (rankError.value) {
+      console.error('Error fetching user rank:', rankError.value)
+      userRank.value = null
+      throw new Error('Error fetching user rank')
+    } else {
+      userRank.value = rankData.value.rank
+      if (userRank.value <= 3) {
+        const jsConfetti = new JSConfetti()
+        setTimeout(() => {
+          jsConfetti.addConfetti({
+            emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+          })
+          jsConfetti.addConfetti({
+            emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+          })
+        }, 4000)
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error fetching leaderboard and rank:', err)
+    leaderboard.value = []
+    userRank.value = null
+    alert('Error fetching leaderboard and rank, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
+  } finally {
+    isScoreSubmitted.value = true
+    isLoadingSubmission.value = false
+    isLoadingLeaderboard.value = false
+  }
+}
+
+const fetchUserRank = async (username, mode) => {
+  try {
+    const { data, error } = await useFetch(`/api/leaderboard/rank?username=${username}&mode=${mode}`)
+    if (error.value) {
+      console.error('Error fetching user rank:', error.value)
+      userRank.value = null
+    } else {
+      userRank.value = data.value.rank
+      if (userRank.value <= 3) {
+        const jsConfetti = new JSConfetti()
+        await jsConfetti.addConfetti({
+          emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+        })
+      }
+    }
+  } catch (err) {
+    console.error('Unexpected error fetching user rank:', err)
+    userRank.value = null
+  }
+}
+
 const isScoreSubmitted = ref(false)
 const isLoadingSubmission = ref(false)
 
 const submitScore = async () => {
   if (!username.value) return
   isLoadingSubmission.value = true
+  isLoadingLeaderboard.value = true
   const jsConfetti = new JSConfetti()
   const newEntry = {
     username: username.value,
@@ -87,18 +153,21 @@ const submitScore = async () => {
     localStorage.setItem('username', username.value) // Store username in localStorage
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
-    isScoreSubmitted.value = true
-    await jsConfetti.addConfetti({
+
+    jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
     setTimeout(() => {
-      jsConfetti.clearCanvas()
-    }, 5000)
+      jsConfetti.addConfetti({
+        emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
+      })
+    }, 500)
+    await fetchLeaderboardAndRank(username.value, gameMode.value)
   } else {
     console.error('Error submitting score:', error.value)
+    isLoadingSubmission.value = false
     alert('Error submitting your score, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
   }
-  isLoadingSubmission.value = false
 }
 
 const timer = ref()
@@ -141,6 +210,8 @@ const inputValidators = {
 
 const isGameModeFull = computed(() => gameMode.value === 'full')
 const isGameModeCard = computed(() => gameMode.value === 'card')
+
+const isGameRunning = computed(() => timer.value?.isRunning() || false)
 
 /*
 TODO:
@@ -231,7 +302,7 @@ onMounted(async () => {
       username.value = ''
     }
   })
-  await fetchLeaderboard()
+  // await fetchLeaderboard() – NO NEED ANYMORE WE FETCHING AFTER SUBMISSION SCORE
 })
 
 const startGame = () => {
@@ -254,10 +325,11 @@ const shareGame = async () => {
   shareShortCode.value = ''
 
   // Grab score in seconds and a placeholder name
-  const score = timer.value.getTime();
-  const name = inputScoreName.value || 'Anonymous';
-  const mode = gameMode.value;
-  const data = { score, name, mode };
+  const score = timer.value.getTime()
+  const name = username.value || 'Anonymous'
+  // const name = inputScoreName.value || 'Anonymous'
+  const mode = gameMode.value
+  const data = { score, name, mode }
 
   try {
     // Use $fetch to call the encrypt API
@@ -267,7 +339,7 @@ const shareGame = async () => {
     })
 
     // Store the encrypted shortcode
-    shareShortCode.value = response.encryptedCode;
+    shareShortCode.value = response.encryptedCode
   } catch (error) {
     console.error('Error encrypting game data:', error)
     shareShortCode.value = null
@@ -275,12 +347,12 @@ const shareGame = async () => {
 }
 
 const copyShareLink = async (link) => {
-  hasCopiedShareLink.value = true;
-  await navigator.clipboard.writeText(link);
+  hasCopiedShareLink.value = true
+  await navigator.clipboard.writeText(link)
   setTimeout(() => {
-    hasCopiedShareLink.value = false;
-  }, 2000);
-};
+    hasCopiedShareLink.value = false
+  }, 2000)
+}
 
 const restartGame = () => {
   hasPlayedGame.value = false
@@ -314,6 +386,8 @@ const restartGame = () => {
   localStorage.setItem('isUsernameSubmitted', JSON.stringify(false))
 
   shareShortCode.value = ''
+  userRank.value = null
+  leaderboard.value = []
 }
 
 const disableInputs = computed(() => {
@@ -411,7 +485,7 @@ const validateResults = () => {
       concludingMessage.value =
         "Absolute fire but maybe try again cause there's more fun messages lol pls try harder and read those, took me so long to come up with them =')"
     } else if ((isGameModeFull.value && timer.value.getTime() < 13) || (isGameModeCard.value && timer.value.getTime() < 5)) {
-      concludingMessage.value = 'HMMMMMRRR! Ur blazin\' there wow but can you like, try harder?! I want you to see the other messages lol';
+      concludingMessage.value = "HMMMMMRRR! Ur blazin' there wow but can you like, try harder?! I want you to see the other messages lol"
     } else if ((isGameModeFull.value && timer.value.getTime() < 16) || (isGameModeCard.value && timer.value.getTime() < 6)) {
       concludingMessage.value = "Sick score but don't share this because your friends might unfollow you, you can do better!"
     } else if ((isGameModeFull.value && timer.value.getTime() < 19) || (isGameModeCard.value && timer.value.getTime() < 7)) {
@@ -491,6 +565,7 @@ class Timer {
 
 <template>
   <div class="h-full min-h-screen h-100% relative">
+    <!-- <div class="absolute z-50 w-full h-screen bg-indigo-400"></div> -->
     <div v-if="username" class="absolute top-3 left-3 border-2 border-white/50 rounded-full px-1.5 py-0.5 text-xs text-white font-mono">
       @{{ username }}
     </div>
@@ -498,180 +573,108 @@ class Timer {
       <div class="lg:w-[40%] flex bg-indigo-600 font-mono text-white p-4">
         <div class="flex flex-col justify-between grow">
           <div class="w-full grow">
-            <h1 class="mt-8 text-3xl text-center lg:mt-16">4242.pro</h1>
-
-            <p class="mx-4 my-3 text-center">👀 Let's see if ur a 10x engineer or a n00b, your goal is to fill this checkout form asap.</p>
+            <h1 class="mt-8 font-mono text-4xl text-center lg:mt-16">4242.pro</h1>
+            <p class="mx-4 my-3 text-lg text-center text-indigo-100">Let's see if ur a real 10x engineer or a n00b 👀</p>
+            <div class="w-full h-[2px] mt-6 bg-indigo-500"></div>
+            <div class="w-9/12 mx-auto mt-16 text-left" v-if="!hasPlayedGame">
+              <p class="mb-2 text-lg font-bold">🎯 Your Goal</p>
+              <p>Fill out the right checkout form <span class="font-bold">asap</span> 👉</p>
+            </div>
 
             <!-- BEFORE GAME / ACCEPTING TERMS -->
             <template v-if="!hasAcceptedTerms">
-              <p class="mx-4 mt-16 mb-2 italic text-center">
-                First, please click the button below to confirm you understand this is a GAME and not REAL. If you enter your real CC details, perhaps
-                I will charge you! Don't gamble, be warned. Okay now that you have read this, click the button below and show me ur sk1lz.
-              </p>
-              <button @click="hasAcceptedTerms = true" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
-                Yes, I understand the above m8 dw
-              </button>
+              <div class="mt-28">
+                <button
+                  @click="hasAcceptedTerms = true"
+                  class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg scale-[1.15] hover:scale-[1.16] transition-transform hover:bg-teal-50"
+                >
+                  Let's start the game m8 →
+                </button>
+                <p class="w-11/12 mx-auto mt-8 mb-2 text-xs italic text-center text-indigo-400">
+                  By clicking the start button you confirm that you understand this is a <strong>GAME</strong> and <strong>NOT REAL</strong>. Again
+                  it's <strong>NOT REAL</strong>. If you enter your real CC details, perhaps we will charge you! Don't gamble, be warned. Okay now
+                  that you have read this, click the button above and show us ur sk1lz.
+                </p>
+              </div>
             </template>
 
             <!-- CURRENT STATE OR OUTCOME OF GAME -->
             <template v-else>
-              <div class="flex items-center justify-center mx-auto mt-8 mb-5 font-bold text-center text-white">↓ Pick your game mode ↓</div>
-              <div class="grid max-w-sm grid-cols-2 mx-auto gap-x-2">
-                <div
-                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
-                  @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
-                  :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
-                >
-                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
-                      <path
-                        d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
-                      />
-                      <path
-                        d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
-                      />
-                      <path
-                        d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
-                      />
-                    </g>
-                  </svg>
-                  Full form
-                </div>
-
-                <div
-                  class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
-                  @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
-                  :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
-                >
-                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
-                    <g fill="currentColor">
-                      <path
-                        d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
-                      />
-                      <path
-                        d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
-                      />
-                    </g>
-                  </svg>
-                  Card only
-                </div>
-              </div>
-
               <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p class="mt-8 lg:mt-16 text-4xl text-center">{{ timer ? timer.getTime().toFixed(4) : '' }} seconds</p>
+                <p class="mt-8 text-center lg:mt-16">
+                  <span class="text-4xl" :class="hasPlayedGame ? 'font-bold' : ''"> {{ timer ? timer.getTime().toFixed(4) : '' }}</span
+                  ><span class="text-2xl"> seconds</span>
+                </p>
               </template>
+              <p class="flex items-center justify-center mt-2 text-sm italic text-center text-indigo-300" v-if="!timer.hasBeenActivated()">
+                <svg class="mr-2 text-white size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="0" fill="currentColor">
+                    <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
+                    <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
+                  </circle>
+                </svg>
+                Starts wen focussing on any input
+              </p>
+              <p class="mx-3 mt-12 mb-16 text-2xl italic text-center text-indigo-100" v-if="showConcludingMessage">"{{ concludingMessage }}"</p>
 
-              <p class="mt-2 text-sm italic text-center" v-if="!timer.hasBeenActivated()">Starts wen focussing on any input</p>
-
-              <p class="my-4 text-3xl text-center" v-if="showConcludingMessage">{{ concludingMessage }}</p>
-
-              <!-- Username input and leaderboard -->
-              <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
-              <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4">
-                <div class="flex items-center px-4 py-2 mx-auto mt-4 bg-white rounded-lg">
-                  <span class="text-gray-500">x.com/</span>
-                  <!-- :disabled="isUsernameDisabled" -->
-                  <input
-                    v-model="username"
-                    :disabled="isUsernameDisabled"
-                    placeholder="Enter your X username"
-                    class="flex-grow px-2 text-indigo-600 bg-white focus:outline-none"
-                  />
-                </div>
-                <button
-                  @click="submitScore"
-                  class="flex items-center justify-center px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white border-indigo-600 rounded-lg hover:bg-teal-50"
-                >
-                  <svg
-                    v-if="isLoadingSubmission"
-                    class="w-4 h-4 text-indigo-700 mr-1.5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
+              <div class="contents" v-if="!isGameRunning">
+                <div class="flex items-center justify-center mx-auto mt-10 mb-5 font-bold text-center text-white">↓ Pick your game mode ↓</div>
+                <div class="grid max-w-sm grid-cols-2 mx-auto gap-x-2">
+                  <div
+                    class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
+                    @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
+                    :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
-                    <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
-                    <path
-                      fill="currentColor"
-                      d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
-                    >
-                      <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
-                    </path>
-                  </svg>
-                  {{ isLoadingSubmission ? 'Submitting' : 'Submit' }} Score →
-                </button>
-              </div>
-
-              <!-- LEADERBOARD -->
-              <div v-if="hasPlayedGame && leaderboard?.length" class="mt-4">
-                <h2 class="mb-4 text-3xl text-center">Leaderboard</h2>
-                <div class="flex justify-center mb-2">
-                  <button
-                    @click="currentLeaderboardMode = 'full'"
-                    :class="currentLeaderboardMode === 'full' ? 'bg-indigo-500' : 'bg-indigo-700'"
-                    class="px-4 py-2 text-white rounded-l-lg hover:bg-indigo-500"
-                  >
+                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
+                        <path
+                          d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
+                        />
+                        <path
+                          d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
+                        />
+                        <path
+                          d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
+                        />
+                      </g>
+                    </svg>
                     Full form
-                  </button>
-                  <button
-                    @click="currentLeaderboardMode = 'card'"
-                    :class="currentLeaderboardMode === 'card' ? 'bg-indigo-500' : 'bg-indigo-700'"
-                    class="px-4 py-2 text-white rounded-r-lg hover:bg-indigo-500"
+                  </div>
+
+                  <div
+                    class="flex items-center justify-center px-4 py-2 border-white cursor-pointer"
+                    @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
+                    :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
+                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
+                      <g fill="currentColor">
+                        <path
+                          d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                        />
+                        <path
+                          d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
+                        />
+                      </g>
+                    </svg>
                     Card only
-                  </button>
+                  </div>
                 </div>
-                <table class="w-11/12 mx-auto mt-6 text-indigo-800 bg-white rounded-lg">
-                  <thead>
-                    <tr>
-                      <th class="px-4 py-2 border-b">Rank</th>
-                      <th class="px-4 py-2 border-b">Username</th>
-                      <th class="px-4 py-2 border-b">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(entry, index) in filteredLeaderboard" :key="entry.id" class="text-center">
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">{{ index + 1 }}</td>
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                        <div class="flex items-center justify-start py-1 ml-8">
-                          <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->
-                          <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                            <path
-                              fill="#888888"
-                              d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
-                            />
-                          </svg>
-                          <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
-                        </div>
-                      </td>
-                      <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                        {{ entry.time.toFixed(3) }}s
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
-
-              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">Here is your shareable link (click to copy): <span class="hover:underline cursor-pointer" :class="hasCopiedShareLink ? 'text-green-200' : ''" @click="copyShareLink('4242.pro/s/' + shareShortCode)">4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span></p>
-                <p v-if="!shareShortCode && showConcludingMessage" class="text-white text-lg my-4 text-center font-bold">OR</p>
-                <div v-if="!shareShortCode && showConcludingMessage" class="flex mt-4 gap-x-2 justify-center">
-                  <input type="text" v-model="inputScoreName" class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                         placeholder="Your name" autocorrect="off" spellcheck="false" data-1p-ignore="true">
-
-                  <button @click="shareGame()" class="flex h-8 bg-white text-xs items-center text-indigo-600 rounded-md px-2 py-1">Generate share URL</button>
-                </div>
-              </template>
-
-              <button @click="restartGame()" v-if="hasPlayedGame" class="flex px-4 py-2 mx-auto mt-4 text-indigo-600 bg-white rounded-lg">
-                Play again
+              <button
+                @click="restartGame()"
+                v-if="hasPlayedGame"
+                class="flex px-4 mt-8 py-2 mx-auto text-indigo-600 bg-white rounded-lg scale-[1.15] hover:scale-[1.16] transition-transform hover:bg-teal-50"
+              >
+                Play again →
               </button>
             </template>
           </div>
 
-          <div class="mt-32 text-sm text-center lg:mt-0">
+          <div class="w-full h-[2px] mb-4 bg-indigo-500"></div>
+          <div class="px-2 py-4 text-xs text-center bg-indigo-800 rounded-md">
             <p>
-              Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a>. I got
+              Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a> and
+              <a href="https://x.com/sobedominik" target="_blank" class="underline cursor-pointer hover:text-gray-200">@sobedominik</a>. We got
               inspired after having to enter these details four hundred trillion times. May the 4 be with you 2!
             </p>
           </div>
@@ -679,7 +682,7 @@ class Timer {
       </div>
 
       <div class="lg:w-[60%] bg-gray-100">
-        <div class="w-full max-w-xl mx-auto my-16 rounded-lg">
+        <div v-if="!hasPlayedGame || (hasPlayedGame && !inputDeclaredValid)" class="w-full max-w-xl mx-auto my-16 rounded-lg">
           <div class="flex flex-col space-y-1.5 p-6">
             <h3 class="text-2xl font-semibold leading-none tracking-tight whitespace-nowrap">Pay with card</h3>
           </div>
@@ -906,6 +909,201 @@ class Timer {
             </button>
           </div>
           <p class="pb-6 text-xs italic text-center underline">Reminder: this is a game, not a real checkout form. You will not be billed.</p>
+        </div>
+        <div v-else>
+          <!-- Username input and leaderboard -->
+          <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
+
+          <!-- LEADERBOARD -->
+          <div v-if="inputDeclaredValid && hasPlayedGame" class="flex flex-col items-center justify-center w-full h-screen">
+            <h2 class="font-mono text-3xl text-center">🏆 Leaderboard</h2>
+            <p class="mt-3 font-mono text-base text-center">The ultimate ranking of 10x engineers 😎</p>
+            <div class="contents" v-if="!isScoreSubmitted">
+              <div class="relative flex items-center justify-center h-[350px] w-10/12 mt-10">
+                <div class="z-10 text-lg font-bold">Submit your score to see if you're in the top 10x engineers 🫣</div>
+                <img src="@/assets/imgs/blurred_leaderboard.jpg" width="200" class="absolute w-full h-auto opacity-80" alt="" />
+              </div>
+              <div v-if="true" class="max-w-sm mx-auto mt-4 font-mono scale-110">
+                <!-- <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4"> -->
+                <div class="flex items-center px-5 py-3 mx-auto mt-4 bg-indigo-800 border-2 border-indigo-300 rounded-lg shadow-md">
+                  <span class="text-indigo-200">x.com/</span>
+                  <!-- :disabled="isUsernameDisabled" -->
+                  <input
+                    v-model="username"
+                    :disabled="isUsernameDisabled"
+                    placeholder="Enter your X username"
+                    :class="isUsernameDisabled ? 'cursor-not-allowed opacity-30' : ''"
+                    class="flex-grow px-2 font-medium text-white bg-indigo-800 focus:outline-none"
+                  />
+                </div>
+                <button
+                  @click="submitScore"
+                  class="flex items-center justify-center scale-[1.15] hover:scale-[1.16] transition-transform px-4 py-2 mx-auto mt-6 font-semibold text-indigo-600 bg-white border-2 border-indigo-700 rounded-lg hover:bg-teal-50"
+                >
+                  <svg
+                    v-if="isLoadingSubmission"
+                    class="w-4 h-4 text-indigo-700 mr-1.5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                  >
+                    <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+                    <path
+                      fill="currentColor"
+                      d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
+                    >
+                      <animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12" />
+                    </path>
+                  </svg>
+                  {{ isLoadingSubmission ? 'Submitting' : 'Submit' }} Score →
+                </button>
+              </div>
+            </div>
+            <div class="contents" v-if="isScoreSubmitted && leaderboard?.length && !isLoadingLeaderboard">
+              <div class="flex justify-center mt-8 mb-2">
+                <button
+                  @click="currentLeaderboardMode = 'full'"
+                  :class="currentLeaderboardMode === 'full' ? 'bg-zinc-800' : 'bg-zinc-500'"
+                  class="flex items-center justify-center px-4 py-2 text-white rounded-l-lg hover:bg-zinc-800"
+                >
+                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
+                      <path
+                        d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
+                      />
+                      <path
+                        d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
+                      />
+                      <path
+                        d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
+                      />
+                    </g>
+                  </svg>
+                  Full form
+                </button>
+                <button
+                  @click="currentLeaderboardMode = 'card'"
+                  :class="currentLeaderboardMode === 'card' ? 'bg-zinc-800' : 'bg-zinc-500'"
+                  class="flex items-center justify-center px-4 py-2 text-white rounded-r-lg hover:bg-zinc-800"
+                >
+                  <svg class="mr-2.5 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
+                    <g fill="currentColor">
+                      <path
+                        d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                      />
+                      <path
+                        d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
+                      />
+                    </g>
+                  </svg>
+                  Card only
+                </button>
+              </div>
+
+              <!-- User rank display -->
+              <div v-if="userRank !== null" class="mt-6 text-center">
+                <p>
+                  Your are currently ranking: <span class="text-indigo-600 text-semibold">{{ userRank }}</span>
+                </p>
+                <p v-if="userRank === 1">🎉 Congratulations! You are the top scorer! 🥇</p>
+                <p v-if="userRank === 2">🎉 Great job! You are the second top scorer! 🥈</p>
+                <p v-if="userRank === 3">🎉 Well done! You are the third top scorer! 🥉</p>
+              </div>
+              <div class="relative w-8/12 mx-auto mt-5 overflow-hidden bg-white rounded-lg shadow-lg text-zinc-800">
+                <table class="w-full table-fixed">
+                  <thead class="sticky top-0 z-10 bg-white">
+                    <tr>
+                      <th class="px-4 py-2 border-b">Rank</th>
+                      <th class="px-4 py-2 border-b">Username</th>
+                      <th class="px-4 py-2 border-b">Time</th>
+                    </tr>
+                  </thead>
+                </table>
+                <div class="max-h-[400px] overflow-y-auto">
+                  <table class="w-full table-fixed">
+                    <tbody>
+                      <tr
+                        v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
+                        :key="entry.id"
+                        :class="[
+                          entry.username === username ? 'bg-yellow-50' : '',
+                          index < 3 ? ' text-indigo-600' : '',
+                          index === 0 ? 'font-bold' : '',
+                        ]"
+                        class="text-center"
+                      >
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          <span v-if="index === 0">🥇</span>
+                          <span v-if="index === 1">🥈</span>
+                          <span v-if="index === 2">🥉</span>
+                          {{ index + 1 }}
+                        </td>
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          <div class="flex items-center justify-start py-1 ml-0">
+                            <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                              <path
+                                fill="#888888"
+                                d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
+                              />
+                            </svg>
+                            <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
+                          </div>
+                        </td>
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          {{ entry.time.toFixed(3) }}s
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
+                  Here is your shareable link (click to copy):
+                  <span
+                    class="cursor-pointer hover:underline"
+                    :class="hasCopiedShareLink ? 'text-green-200' : ''"
+                    @click="copyShareLink('4242.pro/s/' + shareShortCode)"
+                    >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
+                  >
+                </p>
+
+                <div v-if="!shareShortCode && showConcludingMessage" class="flex flex-col items-center justify-center mt-4 gap-x-2">
+                  <!-- <input
+                type="text"
+                v-model="inputScoreName"
+                class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Your name"
+                autocorrect="off"
+                spellcheck="false"
+                data-1p-ignore="true"
+              /> -->
+                  <h3 class="mt-6 mb-1 font-mono text-xl font-medium">🌐 Share your score</h3>
+                  <p class="mb-5 font-mono text-xs opacity-60">If you are brave enough</p>
+                  <button
+                    @click="shareGame()"
+                    class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white border-2 border-indigo-700 rounded-md"
+                  >
+                    Generate share URL →
+                  </button>
+                </div>
+              </template>
+            </div>
+            <div v-if="isScoreSubmitted && isLoadingLeaderboard" class="flex flex-col items-center justify-center w-full h-screen">
+              <div class="flex items-center justify-center scale-125">
+                <svg class="mr-2 text-black size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="0" fill="currentColor">
+                    <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
+                    <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
+                  </circle>
+                </svg>
+                Fetching the 10x engineers leaderboard...
+              </div>
+              <div class="flex items-center justify-center mt-2 text-sm text-indigo-700">Ready to see how bad you are? 😉</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,8 @@ const collectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID // Replace w
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method
 
+  const url = event.node.req.url
+
   if (method === 'POST') {
     const body = await readBody(event)
     console.log('POST | Appwrite leaderboard API called with body:', body)
@@ -43,7 +45,7 @@ export default defineEventHandler(async (event) => {
     }
   } else if (method === 'GET') {
     try {
-      const response = await databases.listDocuments(databaseId, collectionId)
+      const response = await databases.listDocuments(databaseId, collectionId, [Query.orderAsc('time'), Query.limit(35)])
       console.log('GET | Appwrite leaderboard API called with response:', response)
       return response.documents
     } catch (error) {
