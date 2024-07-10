@@ -448,8 +448,7 @@ const validateResults = () => {
   if (!cardValidationOutcome.isValid) {
     cardDeclineCode.value = cardValidationOutcome.declineCode
     cardErrorCode.value = cardValidationOutcome.errorCode
-    inputCardNumberInvalid.value =
-      "That's not a test card, it says error code" + cardErrorCode.value + (cardDeclineCode.value ? ' because ' + cardDeclineCode.value : '.')
+    inputCardNumberInvalid.value = "That's not a valid card lawl rekt"
     concludingMessage.value = 'Ur formatting is wrong m8'
   } else {
     // save the validationOutcome card type
