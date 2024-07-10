@@ -163,7 +163,7 @@ const hasPlayedGame = ref(false)
 const gameMode = ref('full')
 const shareShortCode = ref('')
 const hasCopiedShareLink = ref(false)
-const openedDevTools = false
+const openedDevTools = ref(false)
 
 const inputEmail = ref('')
 const inputEmailInvalid = ref('')
