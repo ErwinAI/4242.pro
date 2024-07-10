@@ -4,8 +4,6 @@ import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
-//******** LEADEROROROBOARDODODO ****************//
-
 // Initialize Profanity filter
 const options = new ProfanityOptions()
 options.wholeWord = false // set false to catch partial matches
@@ -22,30 +20,7 @@ const leaderboard = ref([])
 const userRank = ref(null)
 const isLoadingLeaderboard = ref(false)
 
-// const leaderboard = ref([
-//   { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
-//   { id: 2, username: 'erwinai', time: 6.45, mode: 'card' },
-//   { id: 3, username: 'yomamamfast', time: 7.89, mode: 'full' },
-// ])
-
 const currentLeaderboardMode = ref('full')
-
-const fetchLeaderboard = async () => {
-  try {
-    await nextTick(async () => {
-      const { data, error } = await useFetch('/api/leaderboard')
-      if (error.value) {
-        console.error('Error fetching leaderboard:', error.value)
-        leaderboard.value = [] // Initialize as an empty array on error
-      } else {
-        leaderboard.value = data.value || [] // Ensure it's an array
-      }
-    })
-  } catch (err) {
-    console.error('Unexpected error fetching leaderboard:', err)
-    leaderboard.value = [] // Initialize as an empty array on error
-  }
-}
 
 const filteredLeaderboard = computed(() => {
   return leaderboard.value.filter((entry) => {
@@ -56,7 +31,7 @@ const filteredLeaderboard = computed(() => {
 const fetchLeaderboardAndRank = async (username, mode) => {
   try {
     isLoadingLeaderboard.value = true
-    const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
+    const { data: leaderboardData, error: leaderboardError } = await $fetch('/api/leaderboard')
     if (leaderboardError.value) {
       console.error('Error fetching leaderboard:', leaderboardError.value)
       leaderboard.value = []
@@ -65,7 +40,7 @@ const fetchLeaderboardAndRank = async (username, mode) => {
       leaderboard.value = leaderboardData.value || []
     }
 
-    const { data: rankData, error: rankError } = await useFetch(`/api/rank?username=${username}&mode=${mode}`)
+    const { data: rankData, error: rankError } = await $fetch(`/api/rank?username=${username}&mode=${mode}`)
     if (rankError.value) {
       console.error('Error fetching user rank:', rankError.value)
       userRank.value = null
@@ -96,27 +71,6 @@ const fetchLeaderboardAndRank = async (username, mode) => {
   }
 }
 
-const fetchUserRank = async (username, mode) => {
-  try {
-    const { data, error } = await useFetch(`/api/leaderboard/rank?username=${username}&mode=${mode}`)
-    if (error.value) {
-      console.error('Error fetching user rank:', error.value)
-      userRank.value = null
-    } else {
-      userRank.value = data.value.rank
-      if (userRank.value <= 3) {
-        const jsConfetti = new JSConfetti()
-        await jsConfetti.addConfetti({
-          emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
-        })
-      }
-    }
-  } catch (err) {
-    console.error('Unexpected error fetching user rank:', err)
-    userRank.value = null
-  }
-}
-
 const isScoreSubmitted = ref(false)
 const isLoadingSubmission = ref(false)
 
@@ -131,7 +85,7 @@ const submitScore = async () => {
     mode: gameMode.value,
   }
 
-  const { data, error } = await useFetch('/api/leaderboard', {
+  const { data, error } = await $fetch('/api/leaderboard', {
     method: 'POST',
     body: newEntry,
   })
@@ -154,7 +108,7 @@ const submitScore = async () => {
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
 
-    jsConfetti.addConfetti({
+    await jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
     setTimeout(() => {
@@ -193,7 +147,6 @@ const inputAddressOne = ref('')
 const inputAddressTwo = ref('')
 const inputCity = ref('')
 const inputZipCode = ref('')
-const inputScoreName = ref('')
 
 const cardType = ref('')
 const cardDeclineCode = ref('')
@@ -216,11 +169,7 @@ const isGameRunning = computed(() => timer.value?.isRunning() || false)
 /*
 TODO:
  - Build overview of favorite indie hackers, products, and tools
- - Save data to DB (score / mode / time / unique shortcode)
- - Make OG image generation using shortcode
- - Make URL shortcut for sharing with shortcode
  - Build "share your score" button
- - Make a leaderboard (?)
  */
 
 // make a special watch for the expiry date, if there are two digits typed, add a slash automatically.
@@ -277,20 +226,6 @@ onMounted(async () => {
     }
   })
 
-  // // Fetch leaderboard from localStorage if available
-  // const storedLeaderboard = JSON.parse(localStorage.getItem('leaderboard'))
-  // if (storedLeaderboard) {
-  //   leaderboard.value = storedLeaderboard
-  // }
-
-  // watch(
-  //   leaderboard,
-  //   (newLeaderboard) => {
-  //     // Store leaderboard in localStorage
-  //     localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard))
-  //   },
-  //   { deep: true }
-  // )
   // Watch for changes in the username input
   watch(username, (newValue) => {
     // Remove spaces
@@ -302,7 +237,6 @@ onMounted(async () => {
       username.value = ''
     }
   })
-  // await fetchLeaderboard() – NO NEED ANYMORE WE FETCHING AFTER SUBMISSION SCORE
 })
 
 const startGame = () => {
@@ -327,7 +261,6 @@ const shareGame = async () => {
   // Grab score in seconds and a placeholder name
   const score = timer.value.getTime()
   const name = username.value || 'Anonymous'
-  // const name = inputScoreName.value || 'Anonymous'
   const mode = gameMode.value
   const data = { score, name, mode }
 
@@ -565,7 +498,11 @@ class Timer {
 
 <template>
   <div class="h-full min-h-screen h-100% relative">
-    <!-- <div class="absolute z-50 w-full h-screen bg-indigo-400"></div> -->
+    <div class="absolute py-32 z-50 w-full font-mono text-white h-screen bg-indigo-400 lg:hidden">
+      <p class="mt-8 text-4xl text-center lg:mt-16">4242.pro</p>
+      <p class="mx-4 my-4 text-lg text-center text-white">Sry but u can only play on big screen lol 🫠 cant rly play with touch keyboard etc.</p>
+      <p class="mx-4 my-6 text-lg text-center text-white">But we promise if u get ur on ur desktop/laptop it's gonna be worth it haha 🤞</p>
+    </div>
     <div v-if="username" class="absolute top-3 left-3 border-2 border-white/50 rounded-full px-1.5 py-0.5 text-xs text-white font-mono">
       @{{ username }}
     </div>
@@ -590,7 +527,7 @@ class Timer {
                 >
                   Let's start the game m8 →
                 </button>
-                <p class="w-11/12 mx-auto mt-8 mb-2 text-xs italic text-center text-indigo-400">
+                <p class="w-11/12 mx-auto mt-8 mb-2 text-xs italic text-center text-indigo-200">
                   By clicking the start button you confirm that you understand this is a <strong>GAME</strong> and <strong>NOT REAL</strong>. Again
                   it's <strong>NOT REAL</strong>. If you enter your real CC details, perhaps we will charge you! Don't gamble, be warned. Okay now
                   that you have read this, click the button above and show us ur sk1lz.
@@ -911,9 +848,6 @@ class Timer {
           <p class="pb-6 text-xs italic text-center underline">Reminder: this is a game, not a real checkout form. You will not be billed.</p>
         </div>
         <div v-else>
-          <!-- Username input and leaderboard -->
-          <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
-
           <!-- LEADERBOARD -->
           <div v-if="inputDeclaredValid && hasPlayedGame" class="flex flex-col items-center justify-center w-full h-screen">
             <h2 class="font-mono text-3xl text-center">🏆 Leaderboard</h2>
@@ -924,10 +858,8 @@ class Timer {
                 <img src="@/assets/imgs/blurred_leaderboard.jpg" width="200" class="absolute w-full h-auto opacity-80" alt="" />
               </div>
               <div v-if="true" class="max-w-sm mx-auto mt-4 font-mono scale-110">
-                <!-- <div v-if="hasPlayedGame && inputDeclaredValid && !isScoreSubmitted" class="max-w-sm mx-auto mt-4"> -->
                 <div class="flex items-center px-5 py-3 mx-auto mt-4 bg-indigo-800 border-2 border-indigo-300 rounded-lg shadow-md">
                   <span class="text-indigo-200">x.com/</span>
-                  <!-- :disabled="isUsernameDisabled" -->
                   <input
                     v-model="username"
                     :disabled="isUsernameDisabled"
@@ -1071,15 +1003,6 @@ class Timer {
                 </p>
 
                 <div v-if="!shareShortCode && showConcludingMessage" class="flex flex-col items-center justify-center mt-4 gap-x-2">
-                  <!-- <input
-                type="text"
-                v-model="inputScoreName"
-                class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Your name"
-                autocorrect="off"
-                spellcheck="false"
-                data-1p-ignore="true"
-              /> -->
                   <h3 class="mt-6 mb-1 font-mono text-xl font-medium">🌐 Share your score</h3>
                   <p class="mb-5 font-mono text-xs opacity-60">If you are brave enough</p>
                   <button
