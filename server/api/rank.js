@@ -14,8 +14,6 @@ const collectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID // Replace w
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method
 
-  const url = event.node.req.url
-
   if (method === 'GET') {
     const { username, mode } = getQuery(event)
     try {

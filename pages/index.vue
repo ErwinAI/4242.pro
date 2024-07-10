@@ -163,7 +163,7 @@ const hasPlayedGame = ref(false)
 const gameMode = ref('full')
 const shareShortCode = ref('')
 const hasCopiedShareLink = ref(false)
-const openedDevTools = ref(false)
+const openedDevTools = false
 
 const inputEmail = ref('')
 const inputEmailInvalid = ref('')
@@ -201,7 +201,6 @@ const isGameRunning = computed(() => timer.value?.isRunning() || false)
 /*
 TODO:
  - Build overview of favorite indie hackers, products, and tools
- - Build "share your score" button
  */
 
 // make a special watch for the expiry date, if there are two digits typed, add a slash automatically.
