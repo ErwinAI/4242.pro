@@ -17,6 +17,17 @@ export default defineNuxtConfig({
     }
   },
 
+  csurf: { // optional
+    https: false,
+    cookie: {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict'
+    },
+    methodsToProtect: ['POST'], // the request methods we want CSRF protection for
+    addCsrfTokenToEventCtx: true // default false, to run useCsrfFetch on server set it to true
+  },
+
   runtimeConfig: {
     secretShareKey: '',
   },
