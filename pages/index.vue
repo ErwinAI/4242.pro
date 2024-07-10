@@ -259,62 +259,72 @@ const onKeydown = (event) => {
   }
 }
 
-onMounted(async () => {
-  const cardIcons = document.querySelectorAll('.card-icon')
-  let currentIndex = 0
+onMounted(() => {
+  const cardIcons = document.querySelectorAll('.card-icon');
+  let currentIndex = 0;
 
   function showNextIcon() {
-    cardIcons[currentIndex].classList.remove('opacity-100', 'scale-100')
-    cardIcons[currentIndex].classList.add('opacity-0', 'scale-[0.9]')
+    if (cardIcons.length === 0) return; // Ensure there are icons
+    cardIcons[currentIndex].classList.remove('opacity-100', 'scale-100');
+    cardIcons[currentIndex].classList.add('opacity-0', 'scale-[0.9]');
 
-    currentIndex = (currentIndex + 1) % cardIcons.length
+    currentIndex = (currentIndex + 1) % cardIcons.length;
 
-    cardIcons[currentIndex].classList.remove('opacity-0', 'scale-[0.9]')
-    cardIcons[currentIndex].classList.add('opacity-100', 'scale-100')
+    cardIcons[currentIndex].classList.remove('opacity-0', 'scale-[0.9]');
+    cardIcons[currentIndex].classList.add('opacity-100', 'scale-100');
   }
 
-  setInterval(showNextIcon, 2000)
+  setInterval(showNextIcon, 2000);
 
-  //watch whether hasAcceptedTerms goes to true
+  // Watch whether hasAcceptedTerms goes to true
   watch(hasAcceptedTerms, (value) => {
     if (value) {
-      timer.value = new Timer()
+      timer.value = new Timer();
     }
-  })
+  });
 
   // Watch for changes in the username input
   watch(username, (newValue) => {
     // Remove spaces
-    username.value = newValue.replace(/\s/g, '')
+    username.value = newValue.replace(/\s/g, '');
 
     // Check for profanity
     if (profanity.exists(username.value)) {
-      alert('Please avoid using inappropriate words in your username.')
-      username.value = ''
+      alert('Please avoid using inappropriate words in your username.');
+      username.value = '';
     }
-  })
+  });
 
-  if (process.client) {
-    if (typeof devtoolsDetector !== 'undefined') {
-      if(devtoolsDetector.isOpen) {
-        openedDevTools.value = true
-      }
+  // Ensure the DOM is fully rendered
+  requestAnimationFrame(() => {
 
-      devtoolsDetector.config.onDetectOpen = () => {
-        openedDevTools.value = true
-      }
-      devtoolsDetector.config.onDetectClose = () => {
-        openedDevTools.value = false
-      }
-    }
+    // Periodically check for the devtoolsDetector
+    const checkDevtoolsDetector = () => {
+      if (typeof devtoolsDetector !== 'undefined') {
+        if (devtoolsDetector.isOpen) {
+          openedDevTools.value = true;
+        }
 
-    // to prevent pasting
+        devtoolsDetector.config.onDetectOpen = () => {
+          openedDevTools.value = true;
+        };
+        devtoolsDetector.config.onDetectClose = () => {
+          openedDevTools.value = false;
+        };
+      } else {
+        setTimeout(checkDevtoolsDetector, 1000); // Retry after 1 second
+      }
+    };
+
+    // checkDevtoolsDetector();
+
+    // To prevent pasting
     const disableCopyCutPaste = (event) => {
-      event.preventDefault()
-    }
-    document.body.addEventListener('paste', disableCopyCutPaste)
-  }
-})
+      event.preventDefault();
+    };
+    document.body.addEventListener('paste', disableCopyCutPaste);
+  });
+});
 
 const startGame = () => {
   if (hasAcceptedTerms.value) {
@@ -322,8 +332,10 @@ const startGame = () => {
   }
 }
 
-const stopGame = (e) => {
-  if(e.isTrusted) {
+const stopGame = (event) => {
+  if (!event.isTrusted) {
+    console.log('Synthetic event detected');
+  } else {
     hasPlayedGame.value = true
     timer.value.stop()
 
@@ -667,234 +679,247 @@ class Timer {
         </div>
 
         <div class="lg:w-[60%] bg-gray-100">
-          <div v-if="!hasPlayedGame || (hasPlayedGame && !inputDeclaredValid)" class="w-full max-w-xl mx-auto my-16 rounded-lg">
-            <div class="flex flex-col space-y-1.5 p-6">
-              <h3 class="text-2xl font-semibold leading-none tracking-tight whitespace-nowrap">Pay with card</h3>
-            </div>
-            <div class="p-6 space-y-4">
-              <div v-if="!isGameModeCard" class="space-y-2">
-                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
-
-                <input
-                  @focusin="startGame()"
-                  :disabled="disableInputs"
-                  v-model="inputEmail"
-                  class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id="email"
-                  placeholder="imightspamyoul8ter@justkiddingiwont.com"
-                  type="email"
-                  autocorrect="off"
-                  spellcheck="false"
-                  data-1p-ignore="true"
-                />
-
-                <p v-if="inputEmailInvalid" class="text-xs italic text-red-500 grow">{{ inputEmailInvalid }}</p>
+          <form v-if="!hasPlayedGame || (hasPlayedGame && !inputDeclaredValid)" @submit.prevent="stopGame">
+            <div class="w-full max-w-xl mx-auto my-16 rounded-lg">
+              <div class="flex flex-col space-y-1.5 p-6">
+                <h3 class="text-2xl font-semibold leading-none tracking-tight whitespace-nowrap">Pay with card</h3>
               </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Card information</label>
-                <div class="relative w-full bg-white">
-                  <div class="relative">
-                    <span class="relative block w-full p-0 m-0">
-                      <input
-                        :disabled="disableInputs"
-                        @input="limitCardNumberLength"
-                        @focusin="startGame()"
-                        v-model="inputCardNumber"
-                        class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 text-sm text-[#1a1a1ae6] leading-normal relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        autocorrect="off"
-                        spellcheck="false"
-                        id="cardNumber"
-                        name="cardNumber"
-                        type="text"
-                        inputmode="numeric"
-                        placeholder="1234 1234 1234 1234"
-                        aria-describedby=""
-                        data-1p-ignore="false"
-                      />
-                    </span>
-                  </div>
-                  <div class="flex items-center pointer-events-none absolute right-0 top-0 h-full pr-2 z-[3]" style="opacity: 1">
-                    <CardIcon src="/visa.svg" alt="Visa" />
-                    <CardIcon src="/mastercard.svg" alt="MasterCard" />
-                    <CardIcon src="/amex.svg" alt="American Express" />
+              <div class="p-6 space-y-4">
+                <div v-if="!isGameModeCard" class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
 
-                    <div class="relative flex items-center h-4 w-7">
-                      <CardIcon src="/unionpay.svg" alt="UnionPay" :secondaryCard="true" />
-                      <CardIcon src="/jcb.svg" alt="JCB" :secondaryCard="true" />
-                      <CardIcon src="/discover.svg" alt="Discover" :secondaryCard="true" />
-                      <CardIcon src="/diners.svg" alt="Diners Club" :secondaryCard="true" />
-                    </div>
-                  </div>
-                </div>
-                <p v-if="inputCardNumberInvalid" class="text-xs italic text-red-500 grow">{{ inputCardNumberInvalid }}</p>
-                <div class="grid grid-cols-2 items-center gap-x-[2px]">
                   <input
                     @focusin="startGame()"
                     :disabled="disableInputs"
-                    v-model="inputExpiry"
-                    class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-r-none"
-                    id="expiry"
-                    placeholder="MM / JJ"
-                    @input="onInput"
-                    @keydown="onKeydown"
+                    v-model="inputEmail"
+                    class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    id="email"
+                    placeholder="imightspamyoul8ter@justkiddingiwont.com"
+                    type="email"
+                    autocorrect="off"
+                    autocomplete="off"
+                    spellcheck="false"
+                    data-1p-ignore="true"
                   />
-                  <input
-                    @focusin="startGame()"
-                    :disabled="disableInputs"
-                    v-model="inputCvc"
-                    class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-l-none"
-                    id="cvc"
-                    placeholder="CVC"
-                  />
+
+                  <p v-if="inputEmailInvalid" class="text-xs italic text-red-500 grow">{{ inputEmailInvalid }}</p>
                 </div>
-                <p v-if="inputExpiryInvalid" class="text-xs italic text-red-500 grow">{{ inputExpiryInvalid }}</p>
-                <p v-if="inputCvcInvalid" class="text-xs italic text-red-500 grow">{{ inputCvcInvalid }}</p>
-              </div>
-              <div v-if="!isGameModeCard" class="space-y-2">
-                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="cardholder-name"
-                  >Cardholder name</label
-                >
-                <input
-                  @focusin="startGame()"
-                  :disabled="disableInputs"
-                  v-model="inputName"
-                  class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id="cardholder-name"
-                  placeholder="Full name"
-                  autocorrect="off"
-                  spellcheck="false"
-                  data-1p-ignore="true"
-                />
-              </div>
-              <div v-if="!isGameModeCard" class="space-y-2">
-                <div class="flex justify-between">
-                  <label for="billing-address-fieldset">
-                    <span class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Billing address</span>
-                  </label>
-                </div>
-                <fieldset class="p-0 my-1 ml-0 mr-0 border-none" id="billing-address-fieldset">
-                  <div class="relative flex flex-wrap">
-                    <div class="flex-initial w-full max-w-full">
-                      <div class="relative">
-                        <select
-                          @focusin="startGame()"
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Card information</label>
+                  <div class="relative w-full bg-white">
+                    <div class="relative">
+                      <span class="relative block w-full p-0 m-0">
+                        <input
                           :disabled="disableInputs"
-                          v-model="inputCountry"
-                          id="billingCountry"
-                          name="billingCountry"
-                          aria-label="Country"
+                          @input="limitCardNumberLength"
+                          @focusin="startGame()"
+                          v-model="inputCardNumber"
+                          class="flex h-10 w-full max-w-lg rounded-md border px-3 py-2 text-sm text-[#1a1a1ae6] leading-normal relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           autocorrect="off"
-                          class="appearance-none flex h-10 w-full rounded-t-md border px-3 py-2 text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <CountrySelectorOptions />
-                        </select>
-                        <svg
-                          class="h-3 mt-[calc(12px*-.5)] pointer-events-none absolute right-[12px] top-1/2 w-3 z-[3]"
-                          focusable="false"
-                          viewBox="0 0 12 12"
-                        >
-                          <path
-                            d="M10.193 3.97a.75.75 0 0 1 1.062 1.062L6.53 9.756a.75.75 0 0 1-1.06 0L.745 5.032A.75.75 0 0 1 1.807 3.97L6 8.163l4.193-4.193z"
-                            fill-rule="evenodd"
-                          ></path>
-                        </svg>
-                      </div>
+                          spellcheck="false"
+                          autocomplete="off"
+                          id="cardNumber"
+                          name="cardNumber"
+                          type="text"
+                          inputmode="numeric"
+                          placeholder="1234 1234 1234 1234"
+                          aria-describedby=""
+                          data-1p-ignore="false"
+                        />
+                      </span>
                     </div>
-                    <div class="flex-initial w-full max-w-full min-w-0">
-                      <div class="relative">
-                        <span class="block mt-[2px] relative w-full">
-                          <input
-                            @focusin="startGame()"
-                            :disabled="disableInputs"
-                            v-model="inputAddressOne"
-                            class="flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                            autocorrect="off"
-                            spellcheck="false"
-                            id="billingAddressLine1"
-                            name="billingAddressLine1"
-                            type="text"
-                            aria-label="Address line 1"
-                            placeholder="Address line 1"
-                            data-1p-ignore="true"
-                          />
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex-initial w-full max-w-full min-w-0">
-                      <div class="relative">
-                        <span class="block mt-[2px] relative w-full">
-                          <input
-                            @focusin="startGame()"
-                            :disabled="disableInputs"
-                            v-model="inputAddressTwo"
-                            class="appearance-none flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                            autocorrect="off"
-                            spellcheck="false"
-                            id="billingAddressLine2"
-                            name="billingAddressLine2"
-                            type="text"
-                            aria-label="Address line 2"
-                            placeholder="Address line 2"
-                            data-1p-ignore="true"
-                          />
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex-initial w-full max-w-full min-w-0">
-                      <div class="relative">
-                        <span class="block mt-[2px] relative w-full">
-                          <input
-                            @focusin="startGame()"
-                            :disabled="disableInputs"
-                            v-model="inputCity"
-                            class="appearance-none flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                            autocorrect="off"
-                            spellcheck="false"
-                            id="billingCity"
-                            name="billingCity"
-                            type="text"
-                            aria-label="City"
-                            placeholder="City"
-                            data-1p-ignore="true"
-                          />
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex-initial w-full max-w-full min-w-0">
-                      <div class="relative">
-                        <span class="block mt-[2px] relative w-full">
-                          <input
-                            @focusin="startGame()"
-                            :disabled="disableInputs"
-                            v-model="inputZipCode"
-                            class="appearance-none flex h-10 w-full rounded-b-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                            autocorrect="off"
-                            spellcheck="false"
-                            id="billingZipCode"
-                            name="billingZipCode"
-                            type="text"
-                            aria-label="Zipcode"
-                            placeholder="Zipcode"
-                            data-1p-ignore="true"
-                          />
-                        </span>
+                    <div class="flex items-center pointer-events-none absolute right-0 top-0 h-full pr-2 z-[3]" style="opacity: 1">
+                      <CardIcon src="/visa.svg" alt="Visa" />
+                      <CardIcon src="/mastercard.svg" alt="MasterCard" />
+                      <CardIcon src="/amex.svg" alt="American Express" />
+
+                      <div class="relative flex items-center h-4 w-7">
+                        <CardIcon src="/unionpay.svg" alt="UnionPay" :secondaryCard="true" />
+                        <CardIcon src="/jcb.svg" alt="JCB" :secondaryCard="true" />
+                        <CardIcon src="/discover.svg" alt="Discover" :secondaryCard="true" />
+                        <CardIcon src="/diners.svg" alt="Diners Club" :secondaryCard="true" />
                       </div>
                     </div>
                   </div>
-                </fieldset>
+                  <p v-if="inputCardNumberInvalid" class="text-xs italic text-red-500 grow">{{ inputCardNumberInvalid }}</p>
+                  <div class="grid grid-cols-2 items-center gap-x-[2px]">
+                    <input
+                      @focusin="startGame()"
+                      :disabled="disableInputs"
+                      v-model="inputExpiry"
+                      class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-r-none"
+                      id="expiry"
+                      placeholder="MM / JJ"
+                      autocorrect="off"
+                      autocomplete="off"
+                      @input="onInput"
+                      @keydown="onKeydown"
+                    />
+                    <input
+                      @focusin="startGame()"
+                      :disabled="disableInputs"
+                      v-model="inputCvc"
+                      autocorrect="off"
+                      autocomplete="off"
+                      class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-l-none"
+                      id="cvc"
+                      placeholder="CVC"
+                    />
+                  </div>
+                  <p v-if="inputExpiryInvalid" class="text-xs italic text-red-500 grow">{{ inputExpiryInvalid }}</p>
+                  <p v-if="inputCvcInvalid" class="text-xs italic text-red-500 grow">{{ inputCvcInvalid }}</p>
+                </div>
+                <div v-if="!isGameModeCard" class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="cardholder-name"
+                    >Cardholder name</label
+                  >
+                  <input
+                    @focusin="startGame()"
+                    :disabled="disableInputs"
+                    v-model="inputName"
+                    class="flex h-10 w-full rounded-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    id="cardholder-name"
+                    placeholder="Full name"
+                    autocorrect="off"
+                    autocomplete="off"
+                    spellcheck="false"
+                    data-1p-ignore="true"
+                  />
+                </div>
+                <div v-if="!isGameModeCard" class="space-y-2">
+                  <div class="flex justify-between">
+                    <label for="billing-address-fieldset">
+                      <span class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Billing address</span>
+                    </label>
+                  </div>
+                  <fieldset class="p-0 my-1 ml-0 mr-0 border-none" id="billing-address-fieldset">
+                    <div class="relative flex flex-wrap">
+                      <div class="flex-initial w-full max-w-full">
+                        <div class="relative">
+                          <select
+                            @focusin="startGame()"
+                            :disabled="disableInputs"
+                            v-model="inputCountry"
+                            id="billingCountry"
+                            name="billingCountry"
+                            aria-label="Country"
+                            autocorrect="off"
+                            class="appearance-none flex h-10 w-full rounded-t-md border px-3 py-2 text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <CountrySelectorOptions />
+                          </select>
+                          <svg
+                            class="h-3 mt-[calc(12px*-.5)] pointer-events-none absolute right-[12px] top-1/2 w-3 z-[3]"
+                            focusable="false"
+                            viewBox="0 0 12 12"
+                          >
+                            <path
+                              d="M10.193 3.97a.75.75 0 0 1 1.062 1.062L6.53 9.756a.75.75 0 0 1-1.06 0L.745 5.032A.75.75 0 0 1 1.807 3.97L6 8.163l4.193-4.193z"
+                              fill-rule="evenodd"
+                            ></path>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="flex-initial w-full max-w-full min-w-0">
+                        <div class="relative">
+                          <span class="block mt-[2px] relative w-full">
+                            <input
+                              @focusin="startGame()"
+                              :disabled="disableInputs"
+                              v-model="inputAddressOne"
+                              class="flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              autocorrect="off"
+                              autocomplete="off"
+                              spellcheck="false"
+                              id="billingAddressLine1"
+                              name="billingAddressLine1"
+                              type="text"
+                              aria-label="Address line 1"
+                              placeholder="Address line 1"
+                              data-1p-ignore="true"
+                            />
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex-initial w-full max-w-full min-w-0">
+                        <div class="relative">
+                          <span class="block mt-[2px] relative w-full">
+                            <input
+                              @focusin="startGame()"
+                              :disabled="disableInputs"
+                              v-model="inputAddressTwo"
+                              class="appearance-none flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              autocorrect="off"
+                              autocomplete="off"
+                              spellcheck="false"
+                              id="billingAddressLine2"
+                              name="billingAddressLine2"
+                              type="text"
+                              aria-label="Address line 2"
+                              placeholder="Address line 2"
+                              data-1p-ignore="true"
+                            />
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex-initial w-full max-w-full min-w-0">
+                        <div class="relative">
+                          <span class="block mt-[2px] relative w-full">
+                            <input
+                              @focusin="startGame()"
+                              :disabled="disableInputs"
+                              v-model="inputCity"
+                              class="appearance-none flex h-10 w-full rounded-none border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              autocorrect="off"
+                              autocomplete="off"
+                              spellcheck="false"
+                              id="billingCity"
+                              name="billingCity"
+                              type="text"
+                              aria-label="City"
+                              placeholder="City"
+                              data-1p-ignore="true"
+                            />
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex-initial w-full max-w-full min-w-0">
+                        <div class="relative">
+                          <span class="block mt-[2px] relative w-full">
+                            <input
+                              @focusin="startGame()"
+                              :disabled="disableInputs"
+                              v-model="inputZipCode"
+                              class="appearance-none flex h-10 w-full rounded-b-md border px-3 py-2 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              autocorrect="off"
+                              autocomplete="off"
+                              spellcheck="false"
+                              id="billingZipCode"
+                              name="billingZipCode"
+                              type="text"
+                              aria-label="Zipcode"
+                              placeholder="Zipcode"
+                              data-1p-ignore="true"
+                            />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
               </div>
+              <div class="flex items-center px-6 pt-6 pb-2">
+                <button
+                  :disabled="disableInputs"
+                  type="submit"
+                  class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-10 px-4 py-2 ml-auto w-full bg-[#0A2540] text-white"
+                >
+                  Pay (ends timer)
+                </button>
+              </div>
+              <p class="pb-6 text-xs italic text-center underline">Reminder: this is a game, not a real checkout form. You will not be billed.</p>
             </div>
-            <div class="flex items-center px-6 pt-6 pb-2">
-              <button
-                :disabled="disableInputs"
-                @click="stopGame"
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-10 px-4 py-2 ml-auto w-full bg-[#0A2540] text-white"
-              >
-                Pay (ends timer)
-              </button>
-            </div>
-            <p class="pb-6 text-xs italic text-center underline">Reminder: this is a game, not a real checkout form. You will not be billed.</p>
-          </div>
+          </form>
           <div v-else>
             <!-- LEADERBOARD -->
             <div v-if="inputDeclaredValid && hasPlayedGame" class="flex flex-col items-center justify-center w-full h-screen">
@@ -1000,7 +1025,7 @@ class Timer {
                           </td>
                           <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
                             <div class="flex items-center justify-start py-1 ml-0">
-                              <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                              <svg class="mr-2 size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                                 <path
                                   fill="#888888"
                                   d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
