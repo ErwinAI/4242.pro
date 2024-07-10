@@ -695,8 +695,8 @@ class Timer {
               </div>
               <div class="space-y-2">
                 <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Card information</label>
-                <div class="relative w-full bg-white">
-                  <div class="relative">
+                <div class="relative w-full bg-gray-100">
+                  <div class="relative w-full">
                     <span class="relative block w-full p-0 m-0">
                       <input
                         :disabled="disableInputs"
@@ -716,7 +716,7 @@ class Timer {
                       />
                     </span>
                   </div>
-                  <div class="flex items-center pointer-events-none absolute right-0 top-0 h-full pr-2 z-[3]" style="opacity: 1">
+                  <div class="flex items-center pointer-events-none absolute right-4 top-0 h-full pr-2 z-[3]" style="opacity: 1">
                     <CardIcon src="/visa.svg" alt="Visa" />
                     <CardIcon src="/mastercard.svg" alt="MasterCard" />
                     <CardIcon src="/amex.svg" alt="American Express" />
@@ -730,7 +730,7 @@ class Timer {
                   </div>
                 </div>
                 <p v-if="inputCardNumberInvalid" class="text-xs italic text-red-500 grow">{{ inputCardNumberInvalid }}</p>
-                <div class="grid grid-cols-2 items-center gap-x-[2px]">
+                <div class="grid grid-cols-2 items-center gap-x-[2px] mr-4">
                   <input
                     @focusin="startGame()"
                     :disabled="disableInputs"
