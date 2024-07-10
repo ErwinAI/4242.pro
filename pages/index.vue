@@ -316,7 +316,7 @@ onMounted(() => {
       }
     };
 
-    // checkDevtoolsDetector();
+    checkDevtoolsDetector();
 
     // To prevent pasting
     const disableCopyCutPaste = (event) => {
