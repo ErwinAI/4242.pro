@@ -34,6 +34,7 @@ useHead({
     { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
   ],
   script: [
+    {src: '/main.js'},
     {src: 'https://scripts.simpleanalyticscdn.com/latest.js', body: true, async: true, defer: true, "data-collect-dnt": "true"}
   ]
 });
