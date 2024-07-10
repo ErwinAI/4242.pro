@@ -1,6 +1,5 @@
 <script setup>
 import { Profanity, ProfanityOptions } from '@2toad/profanity'
-import CardIcon from '~/components/CardIcon.vue'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
@@ -544,12 +543,7 @@ class Timer {
                 </p>
               </template>
               <p class="flex items-center justify-center mt-2 text-sm italic text-center text-indigo-300" v-if="!timer.hasBeenActivated()">
-                <svg class="mr-2 text-white size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="0" fill="currentColor">
-                    <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
-                    <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
-                  </circle>
-                </svg>
+                <SvgCircleNotification />
                 Starts wen focussing on any input
               </p>
               <p class="mx-3 mt-12 mb-16 text-2xl italic text-center text-indigo-100" v-if="showConcludingMessage">"{{ concludingMessage }}"</p>
@@ -562,19 +556,7 @@ class Timer {
                     @click=";(gameMode = 'full'), (currentLeaderboardMode = 'full')"
                     :class="isGameModeFull ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
-                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
-                        <path
-                          d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
-                        />
-                        <path
-                          d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
-                        />
-                        <path
-                          d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
-                        />
-                      </g>
-                    </svg>
+                    <SvgFullMode />
                     Full form
                   </div>
 
@@ -583,16 +565,7 @@ class Timer {
                     @click=";(gameMode = 'card'), (currentLeaderboardMode = 'card')"
                     :class="isGameModeCard ? 'border-2 text-white bg-indigo-700' : 'text-gray-400 hover:border-2'"
                   >
-                    <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
-                      <g fill="currentColor">
-                        <path
-                          d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
-                        />
-                        <path
-                          d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
-                        />
-                      </g>
-                    </svg>
+                    <SvgCardMode />
                     Card only
                   </div>
                 </div>
@@ -899,19 +872,7 @@ class Timer {
                   :class="currentLeaderboardMode === 'full' ? 'bg-zinc-800' : 'bg-zinc-500'"
                   class="flex items-center justify-center px-4 py-2 text-white rounded-l-lg hover:bg-zinc-800"
                 >
-                  <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" color="currentColor">
-                      <path
-                        d="M20.016 2C18.903 2 18 4.686 18 8h2.016c.972 0 1.457 0 1.758-.335c.3-.336.248-.778.144-1.661C21.64 3.67 20.894 2 20.016 2"
-                      />
-                      <path
-                        d="M18 8.054v10.592c0 1.511 0 2.267-.462 2.565c-.755.486-1.922-.534-2.509-.904c-.485-.306-.727-.458-.996-.467c-.291-.01-.538.137-1.062.467l-1.911 1.205c-.516.325-.773.488-1.06.488s-.545-.163-1.06-.488l-1.91-1.205c-.486-.306-.728-.458-.997-.467c-.291-.01-.538.137-1.062.467c-.587.37-1.754 1.39-2.51.904C2 20.913 2 20.158 2 18.646V8.054c0-2.854 0-4.28.879-5.167C3.757 2 5.172 2 8 2h12M6 6h8m-6 4H6"
-                      />
-                      <path
-                        d="M12.5 10.875c-.828 0-1.5.588-1.5 1.313c0 .724.672 1.312 1.5 1.312s1.5.588 1.5 1.313c0 .724-.672 1.312-1.5 1.312m0-5.25c.653 0 1.209.365 1.415.875m-1.415-.875V10m0 6.125c-.653 0-1.209-.365-1.415-.875m1.415.875V17"
-                      />
-                    </g>
-                  </svg>
+                  <SvgFullMode />
                   Full form
                 </button>
                 <button
@@ -919,16 +880,7 @@ class Timer {
                   :class="currentLeaderboardMode === 'card' ? 'bg-zinc-800' : 'bg-zinc-500'"
                   class="flex items-center justify-center px-4 py-2 text-white rounded-r-lg hover:bg-zinc-800"
                 >
-                  <svg class="mr-2.5 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16">
-                    <g fill="currentColor">
-                      <path
-                        d="M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
-                      />
-                      <path
-                        d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"
-                      />
-                    </g>
-                  </svg>
+                  <SvgCardMode />
                   Card only
                 </button>
               </div>
@@ -979,7 +931,7 @@ class Timer {
                                 d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
                               />
                             </svg>
-                            <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
+                            <a :href="'https://x.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
                           </div>
                         </td>
                         <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
