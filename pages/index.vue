@@ -254,8 +254,6 @@ onMounted(async () => {
     devtoolsDetector.config.onDetectClose = () => {
       openedDevTools.value = false
     };
-  } else {
-    console.warn('devtoolsDetector is not available.');
   }
 
   // to prevent pasting
