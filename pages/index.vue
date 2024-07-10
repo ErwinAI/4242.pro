@@ -296,6 +296,10 @@ onMounted(async () => {
 
   if (process.client) {
     if (typeof devtoolsDetector !== 'undefined') {
+      if(devtoolsDetector.isOpen) {
+        openedDevTools.value = true
+      }
+
       devtoolsDetector.config.onDetectOpen = () => {
         openedDevTools.value = true
       }
@@ -318,13 +322,12 @@ const startGame = () => {
   }
 }
 
-const stopGame = () => {
-  hasPlayedGame.value = true
-  timer.value.stop()
+const stopGame = (e) => {
+  if(e.isTrusted) {
+    hasPlayedGame.value = true
+    timer.value.stop()
 
-  const outcome = validateResults()
-
-  if (outcome) {
+    validateResults()
   }
 }
 
@@ -884,7 +887,7 @@ class Timer {
             <div class="flex items-center px-6 pt-6 pb-2">
               <button
                 :disabled="disableInputs"
-                @click="stopGame()"
+                @click="stopGame"
                 class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-10 px-4 py-2 ml-auto w-full bg-[#0A2540] text-white"
               >
                 Pay (ends timer)
