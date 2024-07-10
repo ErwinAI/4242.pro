@@ -20,6 +20,7 @@ const isUsernameSubmitted = ref(isBrowser ? JSON.parse(localStorage.getItem('isU
 const isUsernameDisabled = computed(() => isUsernameSubmitted.value) // Update computed property
 const leaderboard = ref([])
 const userRank = ref(null)
+const isLoadingLeaderboard = ref(false)
 
 // const leaderboard = ref([
 //   { id: 1, username: 'sobedominik', time: 5.23, mode: 'full' },
@@ -54,18 +55,21 @@ const filteredLeaderboard = computed(() => {
 
 const fetchLeaderboardAndRank = async (username, mode) => {
   try {
+    isLoadingLeaderboard.value = true
     const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
     if (leaderboardError.value) {
       console.error('Error fetching leaderboard:', leaderboardError.value)
       leaderboard.value = []
+      throw new Error('Error fetching leaderboard')
     } else {
       leaderboard.value = leaderboardData.value || []
     }
 
-    const { data: rankData, error: rankError } = await useFetch(`/api/leaderboard/rank?username=${username}&mode=${mode}`)
+    const { data: rankData, error: rankError } = await useFetch(`/api/rank?username=${username}&mode=${mode}`)
     if (rankError.value) {
       console.error('Error fetching user rank:', rankError.value)
       userRank.value = null
+      throw new Error('Error fetching user rank')
     } else {
       userRank.value = rankData.value.rank
       if (userRank.value <= 3) {
@@ -74,13 +78,19 @@ const fetchLeaderboardAndRank = async (username, mode) => {
           jsConfetti.addConfetti({
             emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
           })
-        }, 7000)
+          jsConfetti.addConfetti({
+            emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
+          })
+        }, 4000)
       }
     }
   } catch (err) {
     console.error('Unexpected error fetching leaderboard and rank:', err)
     leaderboard.value = []
     userRank.value = null
+    alert('Error fetching leaderboard and rank, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
+  } finally {
+    isLoadingLeaderboard.value = false
   }
 }
 
@@ -111,6 +121,7 @@ const isLoadingSubmission = ref(false)
 const submitScore = async () => {
   if (!username.value) return
   isLoadingSubmission.value = true
+  isLoadingLeaderboard.value = true
   const jsConfetti = new JSConfetti()
   const newEntry = {
     username: username.value,
@@ -895,7 +906,7 @@ class Timer {
           <!-- <div v-if="true" class="max-w-sm mx-auto mt-4"> -->
 
           <!-- LEADERBOARD -->
-          <div v-if="inputDeclaredValid && hasPlayedGame && leaderboard?.length" class="flex flex-col items-center justify-center w-full h-screen">
+          <div v-if="inputDeclaredValid && hasPlayedGame" class="flex flex-col items-center justify-center w-full h-screen">
             <h2 class="-mt-10 font-mono text-3xl text-center">🏆 Leaderboard</h2>
             <p class="mt-3 font-mono text-base text-center">The ultimate ranking of 10x engineers 😎</p>
             <div class="contents" v-if="!isScoreSubmitted">
@@ -912,6 +923,7 @@ class Timer {
                     v-model="username"
                     :disabled="isUsernameDisabled"
                     placeholder="Enter your X username"
+                    :class="isUsernameDisabled ? 'cursor-not-allowed opacity-30' : ''"
                     class="flex-grow px-2 font-medium text-white bg-indigo-800 focus:outline-none"
                   />
                 </div>
@@ -939,7 +951,7 @@ class Timer {
                 </button>
               </div>
             </div>
-            <div class="contents" v-if="isScoreSubmitted">
+            <div class="contents" v-if="isScoreSubmitted && leaderboard?.length && !isLoadingLeaderboard">
               <div class="flex justify-center mt-16 mb-2">
                 <button
                   @click="currentLeaderboardMode = 'full'"
@@ -1001,7 +1013,7 @@ class Timer {
                   <tr
                     v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
                     :key="entry.id"
-                    :class="{ 'bg-yellow-50': entry.username === username.value }"
+                    :class="{ 'bg-yellow-50': entry.username === username }"
                     class="text-center"
                   >
                     <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
@@ -1028,6 +1040,18 @@ class Timer {
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div v-if="isScoreSubmitted && isLoadingLeaderboard" class="flex flex-col items-center justify-center w-full h-screen">
+              <div class="flex items-center justify-center scale-110">
+                <svg class="mr-2 text-black size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="0" fill="currentColor">
+                    <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
+                    <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
+                  </circle>
+                </svg>
+                Fetching the 10x engineers leaderboard...
+              </div>
+              <div class="flex items-center justify-center mt-1 text-sm text-indigo-700">Ready to see how bad you are? 😉</div>
             </div>
           </div>
 
