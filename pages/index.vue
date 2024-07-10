@@ -52,7 +52,7 @@ const filteredLeaderboard = computed(() => {
 
 // watch currentLeaderboardMode, check if game mode changed, and fetch leaderboard again
 watch(currentLeaderboardMode, async (newValue) => {
-  if (newValue) {
+  if (newValue && hasPlayedGame.value) {
     isLoadingLeaderboard.value = true
     await fetchLeaderboardAndRank(username.value, newValue)
   }
