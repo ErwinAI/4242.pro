@@ -14,6 +14,9 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/code': {
       csurf: false
+    },
+    '/': {
+      ssr: false
     }
   },
 
@@ -26,6 +29,16 @@ export default defineNuxtConfig({
     },
     methodsToProtect: ['POST'], // the request methods we want CSRF protection for
     addCsrfTokenToEventCtx: true // default false, to run useCsrfFetch on server set it to true
+  },
+
+  hooks: {
+    'pages:extend'(pages) {
+      pages.push({
+        name: 'no-prerender',
+        path: '/',
+        file: '~/pages/index.vue'
+      });
+    }
   },
 
   runtimeConfig: {
