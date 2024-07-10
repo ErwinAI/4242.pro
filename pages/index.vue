@@ -993,7 +993,7 @@ class Timer {
                             </div>
                           </td>
                           <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                            {{ entry.time.toFixed(3) }}s
+                            {{ entry.time.toFixed(4) }}s
                           </td>
                         </tr>
                       </tbody>
