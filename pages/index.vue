@@ -90,6 +90,8 @@ const fetchLeaderboardAndRank = async (username, mode) => {
     userRank.value = null
     alert('Error fetching leaderboard and rank, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
   } finally {
+    isScoreSubmitted.value = true
+    isLoadingSubmission.value = false
     isLoadingLeaderboard.value = false
   }
 }
@@ -151,16 +153,21 @@ const submitScore = async () => {
     localStorage.setItem('username', username.value) // Store username in localStorage
     isUsernameSubmitted.value = true // Set to true after successful submission
     localStorage.setItem('isUsernameSubmitted', JSON.stringify(true)) // Persist state in localStorage
-    isScoreSubmitted.value = true
-    await jsConfetti.addConfetti({
+
+    jsConfetti.addConfetti({
       emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
     })
+    setTimeout(() => {
+      jsConfetti.addConfetti({
+        emojis: ['💳', '💰', '💰', '💸', '💵', '💶', '💷', '💳'],
+      })
+    }, 500)
     await fetchLeaderboardAndRank(username.value, gameMode.value)
   } else {
     console.error('Error submitting score:', error.value)
+    isLoadingSubmission.value = false
     alert('Error submitting your score, please try again later pal 😬 We are not getting paid enough (at all) for this. Bear with us ✌️')
   }
-  isLoadingSubmission.value = false
 }
 
 const timer = ref()
@@ -319,7 +326,8 @@ const shareGame = async () => {
 
   // Grab score in seconds and a placeholder name
   const score = timer.value.getTime()
-  const name = inputScoreName.value || 'Anonymous'
+  const name = username.value || 'Anonymous'
+  // const name = inputScoreName.value || 'Anonymous'
   const mode = gameMode.value
   const data = { score, name, mode }
 
@@ -907,7 +915,7 @@ class Timer {
 
           <!-- LEADERBOARD -->
           <div v-if="inputDeclaredValid && hasPlayedGame" class="flex flex-col items-center justify-center w-full h-screen">
-            <h2 class="-mt-10 font-mono text-3xl text-center">🏆 Leaderboard</h2>
+            <h2 class="font-mono text-3xl text-center">🏆 Leaderboard</h2>
             <p class="mt-3 font-mono text-base text-center">The ultimate ranking of 10x engineers 😎</p>
             <div class="contents" v-if="!isScoreSubmitted">
               <div class="relative flex items-center justify-center h-[350px] w-10/12 mt-10">
@@ -952,7 +960,7 @@ class Timer {
               </div>
             </div>
             <div class="contents" v-if="isScoreSubmitted && leaderboard?.length && !isLoadingLeaderboard">
-              <div class="flex justify-center mt-16 mb-2">
+              <div class="flex justify-center mt-8 mb-2">
                 <button
                   @click="currentLeaderboardMode = 'full'"
                   :class="currentLeaderboardMode === 'full' ? 'bg-zinc-800' : 'bg-zinc-500'"
@@ -1001,48 +1009,89 @@ class Timer {
                 <p v-if="userRank === 2">🎉 Great job! You are the second top scorer! 🥈</p>
                 <p v-if="userRank === 3">🎉 Well done! You are the third top scorer! 🥉</p>
               </div>
-              <table class="w-8/12 mx-auto mt-5 bg-white rounded-lg shadow-lg text-zinc-800">
-                <thead>
-                  <tr>
-                    <th class="px-4 py-2 border-b">Rank</th>
-                    <th class="px-4 py-2 border-b">Username</th>
-                    <th class="px-4 py-2 border-b">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
-                    :key="entry.id"
-                    :class="{ 'bg-yellow-50': entry.username === username }"
-                    class="text-center"
+              <div class="relative w-8/12 mx-auto mt-5 overflow-hidden bg-white rounded-lg shadow-lg text-zinc-800">
+                <table class="w-full table-fixed">
+                  <thead class="sticky top-0 z-10 bg-white">
+                    <tr>
+                      <th class="px-4 py-2 border-b">Rank</th>
+                      <th class="px-4 py-2 border-b">Username</th>
+                      <th class="px-4 py-2 border-b">Time</th>
+                    </tr>
+                  </thead>
+                </table>
+                <div class="max-h-[400px] overflow-y-auto">
+                  <table class="w-full table-fixed">
+                    <tbody>
+                      <tr
+                        v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
+                        :key="entry.id"
+                        :class="[
+                          entry.username === username ? 'bg-yellow-50' : '',
+                          index < 3 ? ' text-indigo-600' : '',
+                          index === 0 ? 'font-bold' : '',
+                        ]"
+                        class="text-center"
+                      >
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          <span v-if="index === 0">🥇</span>
+                          <span v-if="index === 1">🥈</span>
+                          <span v-if="index === 2">🥉</span>
+                          {{ index + 1 }}
+                        </td>
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          <div class="flex items-center justify-start py-1 ml-0">
+                            <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                              <path
+                                fill="#888888"
+                                d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
+                              />
+                            </svg>
+                            <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
+                          </div>
+                        </td>
+                        <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
+                          {{ entry.time.toFixed(3) }}s
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
+                <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
+                  Here is your shareable link (click to copy):
+                  <span
+                    class="cursor-pointer hover:underline"
+                    :class="hasCopiedShareLink ? 'text-green-200' : ''"
+                    @click="copyShareLink('4242.pro/s/' + shareShortCode)"
+                    >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
                   >
-                    <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                      <span v-if="index === 0">🥇</span>
-                      <span v-if="index === 1">🥈</span>
-                      <span v-if="index === 2">🥉</span>
-                      {{ index + 1 }}
-                    </td>
-                    <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                      <div class="flex items-center justify-start py-1 ml-16">
-                        <!-- <img :src="'https://twivatar.glitch.com/' + entry.username" alt="Avatar" class="mr-2 rounded-full w-7 h-7" /> -->
-                        <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                          <path
-                            fill="#888888"
-                            d="M8 2H1l8.26 11.015L1.45 22H4.1l6.388-7.349L16 22h7l-8.608-11.478L21.8 2h-2.65l-5.986 6.886zm9 18L5 4h2l12 16z"
-                          />
-                        </svg>
-                        <a :href="'https://twitter.com/' + entry.username" target="_blank" class="hover:underline">@{{ entry.username }}</a>
-                      </div>
-                    </td>
-                    <td :class="index === filteredLeaderboard.length - 1 ? ' border-b-0' : 'border-b'" class="px-4 py-2">
-                      {{ entry.time.toFixed(3) }}s
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                </p>
+
+                <div v-if="!shareShortCode && showConcludingMessage" class="flex flex-col items-center justify-center mt-4 gap-x-2">
+                  <!-- <input
+                type="text"
+                v-model="inputScoreName"
+                class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Your name"
+                autocorrect="off"
+                spellcheck="false"
+                data-1p-ignore="true"
+              /> -->
+                  <h3 class="mt-6 mb-1 font-mono text-xl font-medium">🌐 Share your score</h3>
+                  <p class="mb-5 font-mono text-xs opacity-60">If you are brave enough</p>
+                  <button
+                    @click="shareGame()"
+                    class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white border-2 border-indigo-700 rounded-md"
+                  >
+                    Generate share URL →
+                  </button>
+                </div>
+              </template>
             </div>
             <div v-if="isScoreSubmitted && isLoadingLeaderboard" class="flex flex-col items-center justify-center w-full h-screen">
-              <div class="flex items-center justify-center scale-110">
+              <div class="flex items-center justify-center scale-125">
                 <svg class="mr-2 text-black size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="0" fill="currentColor">
                     <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
@@ -1051,37 +1100,9 @@ class Timer {
                 </svg>
                 Fetching the 10x engineers leaderboard...
               </div>
-              <div class="flex items-center justify-center mt-1 text-sm text-indigo-700">Ready to see how bad you are? 😉</div>
+              <div class="flex items-center justify-center mt-2 text-sm text-indigo-700">Ready to see how bad you are? 😉</div>
             </div>
           </div>
-
-          <template v-if="!timer.hasBeenActivated() || timer.isRunning() || (timer.hasStopped() && inputDeclaredValid)">
-            <p v-if="shareShortCode" class="mt-8 text-sm italic text-center break-all">
-              Here is your shareable link (click to copy):
-              <span
-                class="cursor-pointer hover:underline"
-                :class="hasCopiedShareLink ? 'text-green-200' : ''"
-                @click="copyShareLink('4242.pro/s/' + shareShortCode)"
-                >4242.pro/s/{{ shareShortCode }} {{ hasCopiedShareLink ? '✅' : '' }}</span
-              >
-            </p>
-            <p v-if="!shareShortCode && showConcludingMessage" class="my-4 text-lg font-bold text-center text-white">OR</p>
-            <div v-if="!shareShortCode && showConcludingMessage" class="flex justify-center mt-4 gap-x-2">
-              <input
-                type="text"
-                v-model="inputScoreName"
-                class="flex h-8 max-w-lg rounded-md border px-2 py-1 bg-white text-sm text-[#1a1a1ae6] leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Your name"
-                autocorrect="off"
-                spellcheck="false"
-                data-1p-ignore="true"
-              />
-
-              <button @click="shareGame()" class="flex items-center h-8 px-2 py-1 text-xs text-indigo-600 bg-white rounded-md">
-                Generate share URL
-              </button>
-            </div>
-          </template>
         </div>
       </div>
     </div>
