@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
     }
   } else if (method === 'GET') {
     try {
-      const response = await databases.listDocuments(databaseId, collectionId, [Query.orderAsc('time'), Query.limit(100)])
+      const response = await databases.listDocuments(databaseId, collectionId, [Query.orderAsc('time'), Query.limit(120)])
       console.log('GET | Appwrite leaderboard API called with response:')
       return response.documents
     } catch (error) {
