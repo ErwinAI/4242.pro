@@ -2,10 +2,6 @@
   <div class="h-full">
     <NuxtPage />
   </div>
-
-  <client-only>
-    <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
-  </client-only>
 </template>
 
 <script setup>
