@@ -1008,7 +1008,7 @@ class Timer {
                     <table class="w-full table-fixed">
                       <tbody>
                         <tr
-                          v-for="(entry, index) in filteredLeaderboard.slice(0, 20)"
+                          v-for="(entry, index) in filteredLeaderboard.slice(0, 30)"
                           :key="entry.id"
                           :class="[
                             entry.username === username ? 'bg-yellow-50' : '',
