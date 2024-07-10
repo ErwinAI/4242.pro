@@ -3,6 +3,16 @@ import { Profanity, ProfanityOptions } from '@2toad/profanity'
 import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator } from 'assets/js/validators.js'
 import JSConfetti from 'js-confetti'
 
+useHead({
+  meta: [
+    { property: 'og:image', content: '/metaog.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { property: 'og:image:alt', content: '4242.pro' },
+    { property: 'twitter:card', content: 'summary_large_image' },
+  ],
+})
+
 // check if browser
 if (process.client) {
   console.log(`
@@ -58,7 +68,6 @@ watch(currentLeaderboardMode, async (newValue) => {
     await fetchLeaderboardAndRank(username.value, newValue)
   }
 })
-
 
 const fetchLeaderboardAndRank = async (username, mode) => {
   try {
@@ -123,7 +132,7 @@ const submitScore = async () => {
   })
 
   if (!error.value) {
-    if(data.value.warning) {
+    if (data.value.warning) {
       hasImprovedScoreMessage.value = 'One of your previous scores was better lol sry'
     }
 
@@ -278,17 +287,17 @@ onMounted(async () => {
     if (typeof devtoolsDetector !== 'undefined') {
       devtoolsDetector.config.onDetectOpen = () => {
         openedDevTools.value = true
-      };
+      }
       devtoolsDetector.config.onDetectClose = () => {
         openedDevTools.value = false
-      };
+      }
     }
 
     // to prevent pasting
     const disableCopyCutPaste = (event) => {
-      event.preventDefault();
-    };
-    document.body.addEventListener('paste', disableCopyCutPaste);
+      event.preventDefault()
+    }
+    document.body.addEventListener('paste', disableCopyCutPaste)
   }
 })
 
@@ -552,13 +561,16 @@ class Timer {
 
 <template>
   <div class="h-full min-h-screen h-100% relative">
-    <div class="absolute py-32 z-50 w-full h-screen font-mono text-white bg-indigo-400 lg:hidden">
+    <div class="absolute z-50 w-full h-screen py-32 font-mono text-white bg-indigo-400 lg:hidden">
       <p class="mt-8 text-4xl text-center lg:mt-16">4242.pro</p>
       <p class="mx-4 my-4 text-lg text-center text-white">Sry but u can only play on big screen lol 🫠 cant rly play with touch keyboard etc.</p>
       <p class="mx-4 my-6 text-lg text-center text-white">But we promise if u get ur on ur desktop/laptop it's gonna be worth it haha 🤞</p>
     </div>
 
-    <div v-if="openedDevTools" class="absolute py-32 z-50 w-full h-screen font-mono text-white bg-indigo-400 flex flex-col items-center justify-center">
+    <div
+      v-if="openedDevTools"
+      class="absolute z-50 flex flex-col items-center justify-center w-full h-screen py-32 font-mono text-white bg-indigo-400"
+    >
       <p class="mb-8 text-4xl text-center">4242.pro</p>
       <p class="mb-2 text-lg font-bold text-center">Haha r u serious?! You opened the devtools, are you trying to cheat? 👀</p>
       <p class="text-lg font-bold text-center">Hell naw m8 we don't allow this. Close the devtools to continue playing the game 😜</p>
@@ -604,7 +616,9 @@ class Timer {
                     <span class="text-4xl" :class="hasPlayedGame ? 'font-bold' : ''"> {{ timer ? timer.getTime().toFixed(4) : '' }}</span
                     ><span class="text-2xl"> seconds</span>
                   </p>
-                  <p class="mt-4 text-base text-center" v-if="hasImprovedScoreMessage && hasImprovedScoreMessage !== ''">{{ hasImprovedScoreMessage }}</p>
+                  <p class="mt-4 text-base text-center" v-if="hasImprovedScoreMessage && hasImprovedScoreMessage !== ''">
+                    {{ hasImprovedScoreMessage }}
+                  </p>
                 </template>
                 <p class="flex items-center justify-center mt-2 text-sm italic text-center text-indigo-300" v-if="!timer.hasBeenActivated()">
                   <SvgCircleNotification />
@@ -1035,7 +1049,14 @@ class Timer {
                   <svg class="mr-2 text-black size-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="0" fill="currentColor">
                       <animate attributeName="r" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="0;11" />
-                      <animate attributeName="opacity" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" repeatCount="indefinite" values="1;0" />
+                      <animate
+                        attributeName="opacity"
+                        calcMode="spline"
+                        dur="1.2s"
+                        keySplines=".52,.6,.25,.99"
+                        repeatCount="indefinite"
+                        values="1;0"
+                      />
                     </circle>
                   </svg>
                   Fetching the 10x engineers leaderboard...
@@ -1051,6 +1072,10 @@ class Timer {
 </template>
 
 <style>
-div[data-lastpass-icon-root] { display: none; }
-div[data-lastpass-root] { display: none; }
+div[data-lastpass-icon-root] {
+  display: none;
+}
+div[data-lastpass-root] {
+  display: none;
+}
 </style>
