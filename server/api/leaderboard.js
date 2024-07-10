@@ -14,11 +14,9 @@ const collectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID // Replace w
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method
 
-  const url = event.node.req.url
-
   if (method === 'POST') {
     const body = await readBody(event)
-    console.log('POST | Appwrite leaderboard API called with body:', body)
+    console.log('POST | Appwrite leaderboard API called with body:')
     const { username, time, mode } = body
     try {
       // Check if a document with the same username and mode exists
@@ -31,12 +29,12 @@ export default defineEventHandler(async (event) => {
         // Update the existing document
         const documentId = existingDocuments.documents[0].$id
         const response = await databases.updateDocument(databaseId, collectionId, documentId, { time })
-        console.log('POST | Appwrite leaderboard API updated document with response:', response)
+        console.log('POST | Appwrite leaderboard API updated document with response:')
         return response
       } else {
         // Create a new document
         const response = await databases.createDocument(databaseId, collectionId, ID.unique(), { username, time, mode })
-        console.log('POST | Appwrite leaderboard API created document with response:', response)
+        console.log('POST | Appwrite leaderboard API created document with response:')
         return response
       }
     } catch (error) {
@@ -46,7 +44,7 @@ export default defineEventHandler(async (event) => {
   } else if (method === 'GET') {
     try {
       const response = await databases.listDocuments(databaseId, collectionId, [Query.orderAsc('time'), Query.limit(35)])
-      console.log('GET | Appwrite leaderboard API called with response:', response)
+      console.log('GET | Appwrite leaderboard API called with response:')
       return response.documents
     } catch (error) {
       console.error('Error fetching documents:', error)

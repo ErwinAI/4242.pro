@@ -27,10 +27,19 @@ const filteredLeaderboard = computed(() => {
   })
 })
 
+// watch currentLeaderboardMode, check if game mode changed, and fetch leaderboard again
+watch(currentLeaderboardMode, async (newValue) => {
+  if (newValue) {
+    isLoadingLeaderboard.value = true
+    await fetchLeaderboardAndRank(username.value, newValue)
+  }
+})
+
+
 const fetchLeaderboardAndRank = async (username, mode) => {
   try {
     isLoadingLeaderboard.value = true
-    const { data: leaderboardData, error: leaderboardError } = await $fetch('/api/leaderboard')
+    const { data: leaderboardData, error: leaderboardError } = await useFetch('/api/leaderboard')
     if (leaderboardError.value) {
       console.error('Error fetching leaderboard:', leaderboardError.value)
       leaderboard.value = []
@@ -39,7 +48,7 @@ const fetchLeaderboardAndRank = async (username, mode) => {
       leaderboard.value = leaderboardData.value || []
     }
 
-    const { data: rankData, error: rankError } = await $fetch(`/api/rank?username=${username}&mode=${mode}`)
+    const { data: rankData, error: rankError } = await useFetch(`/api/rank?username=${username}&mode=${mode}`)
     if (rankError.value) {
       console.error('Error fetching user rank:', rankError.value)
       userRank.value = null
@@ -55,7 +64,7 @@ const fetchLeaderboardAndRank = async (username, mode) => {
           jsConfetti.addConfetti({
             emojis: userRank.value === 1 ? ['🥇'] : userRank.value === 2 ? ['🥈'] : ['🥉'],
           })
-        }, 4000)
+        }, 2000)
       }
     }
   } catch (err) {
@@ -84,7 +93,7 @@ const submitScore = async () => {
     mode: gameMode.value,
   }
 
-  const { data, error } = await $fetch('/api/leaderboard', {
+  const { data, error } = await useFetch('/api/leaderboard', {
     method: 'POST',
     body: newEntry,
   })
