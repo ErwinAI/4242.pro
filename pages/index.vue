@@ -341,7 +341,7 @@ const generateTwitterShareLink = () => {
   const time = lastScore.value ? lastScore.value.time.toFixed(4) : null
 
   // generate twitter share link
-  return `https://twitter.com/intent/tweet?text=Just did the 4242.pro challenge${time ? ' in ' + time + ' seconds' : ''}! R u better dev? Beat my score ;)?&url=${shareUrl.value}&hashtags=4242pro`
+  return `https://twitter.com/intent/tweet?text=Just filled in the @stripe checkout form${time ? ' in ' + time + ' seconds' : ''}! U think u better dev? Beat my score ;)?&url=${shareUrl.value}&hashtags=4242pro`
 }
 
 const restartGame = () => {
