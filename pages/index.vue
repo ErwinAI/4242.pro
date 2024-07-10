@@ -144,10 +144,10 @@ const submitScore = async () => {
 
       if (existingEntryIndex !== -1) {
         // Update the existing entry
-        leaderboard.value[existingEntryIndex] = callResult.data.value
+        leaderboard.value[existingEntryIndex] = callResult
       } else {
         // Add a new entry
-        leaderboard.value.push(callResult.data.value)
+        leaderboard.value.push(callResult)
       }
 
       leaderboard.value.sort((a, b) => a.time - b.time)
