@@ -32,6 +32,11 @@ export default defineEventHandler(async (event) => {
           return { warning: 'Time is not faster than existing time' }
         }
 
+        // check if score is zero or close to it and disqualify
+        if (time < 0.2) {
+          return { warning: 'NEIN' }
+        }
+
         // Update the existing document
         const documentId = existingDocuments.documents[0].$id
         const response = await databases.updateDocument(databaseId, collectionId, documentId, { time })
