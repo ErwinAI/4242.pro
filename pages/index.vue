@@ -570,11 +570,11 @@ class Timer {
 
 <template>
   <div class="h-full min-h-screen h-100% relative">
-    <div class="absolute z-50 w-full h-screen py-32 font-mono text-white bg-indigo-400 lg:hidden">
+    <!--<div class="absolute z-50 w-full h-screen py-32 font-mono text-white bg-indigo-400 lg:hidden">
       <p class="mt-8 text-4xl text-center lg:mt-16">4242.pro</p>
       <p class="mx-4 my-4 text-lg text-center text-white">Sry but u can only play on big screen lol 🫠 cant rly play with touch keyboard etc.</p>
       <p class="mx-4 my-6 text-lg text-center text-white">But we promise if u get ur on ur desktop/laptop it's gonna be worth it haha 🤞</p>
-    </div>
+    </div>-->
 
     <div
       v-if="openedDevTools"

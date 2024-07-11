@@ -122,6 +122,11 @@ export class CreditCardValidator {
             return result;
         }
 
+        if(cardNumber === '0000000000000000') {
+            result.errorCode = "invalid_card";
+            return result;
+        }
+
         result.isValid = true;
 
         if (this.successTestCards[cardNumber]) {
