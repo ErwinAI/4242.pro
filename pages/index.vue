@@ -338,19 +338,37 @@ onMounted(() => {
   });
 });
 
-const startGame = () => {
+const startGame = async () => {
+  const gameInProgress = timer.value?.isRunning() || false;
+  console.log("Start game called, is the game running?", gameInProgress);
   if (hasAcceptedTerms.value) {
-    timer.value.start()
+    // check if game is running before timer starts,
+    // but only send the /api/start request after,
+    // to get most accurate timing
+    timer.value.start();
+    if (!gameInProgress) {
+      await useCsrfFetch('/api/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mode: gameMode.value,
+        }),
+      });
+    }
   }
 }
 
-const stopGame = (event) => {
+const stopGame = async (event) => {
   if (!event.isTrusted) {
     console.log('Synthetic event detected');
   } else {
     hasPlayedGame.value = true
     timer.value.stop()
-
+    await useCsrfFetch('/api/stop', {
+      method: 'POST',
+    });
     validateResults()
   }
 }
