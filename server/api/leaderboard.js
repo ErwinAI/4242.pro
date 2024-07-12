@@ -1,4 +1,5 @@
 import { Client, Databases, ID, Query } from 'node-appwrite'
+import { verifyTurnstile, getIp } from '../utils/turnstile';
 
 const client = new Client()
 client
@@ -17,7 +18,10 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST') {
     const body = await readBody(event)
     console.log('POST | Appwrite leaderboard API called with body:')
-    const { username, time, mode } = body
+    const { username, time, mode, turnstileToken } = body
+    if (!await verifyTurnstile(turnstileToken, getIp(event))) {
+      return { robot: 'y u no human' }
+    }
     try {
       // Check if a document with the same username and mode exists
       const existingDocuments = await databases.listDocuments(databaseId, collectionId, [

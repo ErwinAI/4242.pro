@@ -4,6 +4,8 @@ import { EmailValidator, CVCValidator, ExpiryDateValidator, CreditCardValidator 
 import JSConfetti from 'js-confetti'
 
 const { $csrfFetch } = useNuxtApp()
+const config = useRuntimeConfig();
+const siteKey = config.public.turnstileSiteKey;
 
 useHead({
   meta: [
@@ -13,6 +15,13 @@ useHead({
     { property: 'og:image:alt', content: '4242.pro' },
     { property: 'twitter:card', content: 'summary_large_image' },
   ],
+  script: [
+    {
+      src: 'https://challenges.cloudflare.com/turnstile/v0/api.js',
+      async: true,
+      defer: true,
+    },
+  ]
 })
 
 // check if browser
@@ -133,6 +142,7 @@ const submitScore = async () => {
     username: username.value,
     time: timer.value.getTime(),
     mode: gameMode.value,
+    turnstileToken: turnstile.getResponse(),
   }
 
   try {
@@ -145,7 +155,9 @@ const submitScore = async () => {
 
     if (callResult.warning) {
       hasImprovedScoreMessage.value = 'One of your previous scores was better lol sry'
-    } else {
+    } else if (callResult.robot) {
+      hasImprovedScoreMessage.value = 'You are a robot, you cannot submit scores. 🤖'
+    }else {
 
       // Check if the username already exists in the leaderboard for the current game mode
       const existingEntryIndex = leaderboard.value.findIndex((entry) => entry.username === username.value && entry.mode === gameMode.value)
@@ -907,6 +919,9 @@ class Timer {
                     </div>
                   </fieldset>
                 </div>
+              </div>
+              <div class="flex items-center px-6">
+                <div class="cf-turnstile" data-theme="light" :data-sitekey="siteKey"></div>
               </div>
               <div class="flex items-center px-6 pt-6 pb-2">
                 <button

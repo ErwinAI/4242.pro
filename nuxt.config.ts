@@ -43,6 +43,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     secretShareKey: '',
+    public: {
+      turnstileSiteKey: '',
+    },
   },
 
   site: {
