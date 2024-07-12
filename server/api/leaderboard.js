@@ -10,7 +10,8 @@ client
 const databases = new Databases(client)
 
 const databaseId = process.env.APPWRITE_DATABASE_ID // Replace with your database ID
-const collectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID // Replace with your collection ID
+const leaderboardCollectionId = process.env.APPWRITE_COLLECTION_LEADERBOARD_ID // Replace with your collection ID
+const sessionsCollectionId = process.env.APPWRITE_COLLECTION_SESSIONS_ID // Replace with your collection ID
 
 export default defineEventHandler(async (event) => {
   const method = event.node.req.method
@@ -24,10 +25,39 @@ export default defineEventHandler(async (event) => {
     }
     try {
       // Check if a document with the same username and mode exists
-      const existingDocuments = await databases.listDocuments(databaseId, collectionId, [
+      const existingDocuments = await databases.listDocuments(databaseId, leaderboardCollectionId, [
         Query.equal('username', username),
         Query.equal('mode', mode),
       ])
+
+      // check if score is zero or close to it and disqualify
+      if (time < 0.2) {
+        return { warning: 'NEIN', ...existingDocuments.documents[0] }
+      }
+
+      // check if there is a valid session
+      const cookies = parseCookies(event);
+      const sessionId = cookies['session'];
+      let session;
+
+      try {
+          session = await databases.getDocument(databaseId, sessionsCollectionId, sessionId)
+      } catch(_) {
+          console.log("cannot find session", sessionId);
+          return { error: 'Invalid session' }
+      }
+      
+      // check if the session is for the correct mode
+      if (session.mode !== mode) {
+          console.log("session mode does not match", session, mode);
+          return { error: 'Cheater detected' }
+      }
+
+      // check if the recorded time is close to the reported time
+      if (!isWithinReasonableTime(session, time)) {
+          console.log("recorded time is not close to reported time", session, time);
+          return { error: 'Cheater detected' }
+      }
 
       if (existingDocuments.total > 0) {
 
@@ -36,19 +66,14 @@ export default defineEventHandler(async (event) => {
           return { warning: 'Time is not faster than existing time', ...existingDocuments.documents[0]  }
         }
 
-        // check if score is zero or close to it and disqualify
-        if (time < 0.2) {
-          return { warning: 'NEIN', ...existingDocuments.documents[0] }
-        }
-
         // Update the existing document
         const documentId = existingDocuments.documents[0].$id
-        const response = await databases.updateDocument(databaseId, collectionId, documentId, { time })
+        const response = await databases.updateDocument(databaseId, leaderboardCollectionId, documentId, { time })
         console.log('POST | Appwrite leaderboard API updated document with response:')
         return response
       } else {
         // Create a new document
-        const response = await databases.createDocument(databaseId, collectionId, ID.unique(), { username, time, mode })
+        const response = await databases.createDocument(databaseId, leaderboardCollectionId, ID.unique(), { username, time, mode })
         console.log('POST | Appwrite leaderboard API created document with response:')
         return response
       }
@@ -58,7 +83,7 @@ export default defineEventHandler(async (event) => {
     }
   } else if (method === 'GET') {
     try {
-      const response = await databases.listDocuments(databaseId, collectionId, [Query.orderAsc('time'), Query.limit(120)])
+      const response = await databases.listDocuments(databaseId, leaderboardCollectionId, [Query.orderAsc('time'), Query.limit(120)])
       console.log('GET | Appwrite leaderboard API called with response:')
       return response.documents
     } catch (error) {
@@ -69,3 +94,12 @@ export default defineEventHandler(async (event) => {
     return { error: 'Method not allowed' }
   }
 })
+
+function isWithinReasonableTime(session, time) {
+  if (!session || typeof session.start !== 'number' || typeof session.stop !== 'number') {
+    return false;
+  }
+  const duration = (session.stop - session.start) / 1000;
+  // time should be +/- 0.3 sec from duration (given network delays etc, we can tighten this later if needed)
+  return time >= duration - 0.3 && time <= duration + 0.3;
+}

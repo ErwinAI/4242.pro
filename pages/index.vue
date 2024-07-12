@@ -338,19 +338,33 @@ onMounted(() => {
   });
 });
 
-const startGame = () => {
+const startGame = async () => {
+  const gameInProgress = timer.value?.isRunning() || false;
   if (hasAcceptedTerms.value) {
-    timer.value.start()
+    timer.value.start();
+    if (!gameInProgress) {
+      await useCsrfFetch('/api/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mode: gameMode.value,
+        }),
+      });
+    }
   }
 }
 
-const stopGame = (event) => {
+const stopGame = async (event) => {
   if (!event.isTrusted) {
     console.log('Synthetic event detected');
   } else {
     hasPlayedGame.value = true
     timer.value.stop()
-
+    await useCsrfFetch('/api/stop', {
+      method: 'POST',
+    });
     validateResults()
   }
 }
