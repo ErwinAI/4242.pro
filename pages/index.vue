@@ -340,11 +340,7 @@ onMounted(() => {
 
 const startGame = async () => {
   const gameInProgress = timer.value?.isRunning() || false;
-  console.log("Start game called, is the game running?", gameInProgress);
   if (hasAcceptedTerms.value) {
-    // check if game is running before timer starts,
-    // but only send the /api/start request after,
-    // to get most accurate timing
     timer.value.start();
     if (!gameInProgress) {
       await useCsrfFetch('/api/start', {
