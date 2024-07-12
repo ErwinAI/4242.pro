@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         return { warning: 'NEIN', ...existingDocuments.documents[0] }
       }
 
-      // check if time is reasonable for start and stop time and disqualify
+      // check if there is a valid session
       const cookies = parseCookies(event);
       const sessionId = cookies['session'];
       let session;
@@ -47,6 +47,13 @@ export default defineEventHandler(async (event) => {
           return { error: 'Invalid session' }
       }
       
+      // check if the session is for the correct mode
+      if (session.mode !== mode) {
+          console.log("session mode does not match", session, mode);
+          return { error: 'Cheater detected' }
+      }
+
+      // check if the recorded time is close to the reported time
       if (!isWithinReasonableTime(session, time)) {
           console.log("recorded time is not close to reported time", session, time);
           return { error: 'Cheater detected' }
