@@ -683,7 +683,7 @@ class Timer {
             <div class="px-2 py-4 text-xs text-center bg-indigo-800 rounded-md">
               <p>
                 Made by <a href="https://x.com/erwin_ai" target="_blank" class="underline cursor-pointer hover:text-gray-200">@Erwin_AI</a> and
-                <a href="https://x.com/sobedominik" target="_blank" class="underline cursor-pointer hover:text-gray-200">@sobedominik</a>. We got
+                <a href="https://x.com/sobedominik" target="_blank" class="underline cursor-pointer hover:text-gray-200">@sobedominik</a>, with help from <a href="https://x.com/martijnckx" target="_blank" class="underline cursor-pointer hover:text-gray-200">@martijnckx</a>. We got
                 inspired after having to enter these details four hundred trillion times. May the 4 be with you 2!
               </p>
             </div>
