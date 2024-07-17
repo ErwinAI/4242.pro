@@ -100,7 +100,7 @@ function isWithinReasonableTime(session, time) {
     return false;
   }
   const duration = (session.stop - session.start) / 1000;
-  const offsetToAccountForNetworkDelays = 0.5; // seconds
+  const offsetToAccountForNetworkDelays = 1.0; // seconds
 
   return time >= duration - offsetToAccountForNetworkDelays && time <= duration + offsetToAccountForNetworkDelays;
 }
